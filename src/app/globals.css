@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+.app-layout {
+    display: grid;
+    grid-template-areas:
+        "stepper stepper"
+        "content copilot";
+    grid-template-columns: 2fr 1fr; /* Hauptinhalt breiter als Copilot */
+    grid-template-rows: auto 1fr;
+    height: 100vh;
+}
+
+.stepper { grid-area: stepper; }
+.content-panel { grid-area: content; padding: 2rem; }
+.copilot-panel { grid-area: copilot; background: #f9f9f9; border-left: 1px solid #eee; padding: 2rem; }
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
