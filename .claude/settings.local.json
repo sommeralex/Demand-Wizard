@@ -4,7 +4,10 @@
       "Bash(npm run dev:*)",
       "Bash(git init:*)",
       "Bash(git remote add:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd OPEX/CAPEX budget analysis feature to Demand Wizard\n\nThis commit implements a comprehensive budget analysis system for Austrian companies following Austrian tax law (UGB, EStG):\n\n## New Features:\n- **Schritt 5: Budget Analysis Page** with automatic OPEX/CAPEX classification\n- **Editable Budget Table** with add/edit/delete functionality\n- **Budget Assistant Chatbot** specialized in Austrian tax law\n- **Austrian Tax Law Compliance**: GWG rules, §197 Abs. 2 UGB, Überwiegensprinzip\n\n## Technical Improvements:\n- Enhanced GOOD_EXAMPLE_TEXT with OPEX/CAPEX breakdown\n- Fixed Schritt 4 graph visualization (text contrast issues)\n- Fixed hydration errors in Stepper and Schritt 5\n- Improved error handling and logging throughout\n- Added budget table state to WizardContext with localStorage persistence\n\n## API Enhancements:\n- New /api/budget-assistant endpoint\n- Smart routing: generateContent for initial classification, startChat for conversations\n- JSON extraction from markdown code blocks\n- Comprehensive error handling and validation\n\n## Components:\n- EditableBudgetTable: Fully editable table with automatic sum calculation\n- BudgetChat: Conversational AI assistant for budget questions\n- Updated Stepper with proper SSR/CSR handling\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git branch:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
