@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react'; // Added useEffect
+import { createContext, useContext, useState, ReactNode, useEffect, Dispatch, SetStateAction } from 'react'; // Added useEffect
 
 // --- TYPE DEFINITIONS ---
 interface Rating { bewertung: { klarheit: number; vollstaendigkeit: number; business_value: number; }; feedback_text: string; }
@@ -8,7 +8,7 @@ interface ClassificationResult { [key: string]: { score: string; begruendung: st
 interface SimilarProject { id: string; title: string; status: string; similarity: number; }
 interface Recommendation { empfehlung_aktion: string; target_id: string | null; zusammenfassung_benutzer: string; }
 interface Proposal { markdown: string; }
-interface ChecklistItem { id: string; text: string; checked: boolean; }
+export interface ChecklistItem { id: string; text: string; checked: boolean; }
 interface BudgetTableRow { id: string; kostentyp: 'OPEX' | 'CAPEX'; beschreibung: string; wert: string; jahr: number; }
 interface BusinessCaseData {
   planungshorizont_jahre?: number;
@@ -23,29 +23,29 @@ interface BusinessCaseData {
 
 interface WizardContextType {
   step: number;
-  setStep: (step: number) => void;
+  setStep: Dispatch<SetStateAction<number>>
   text: string;
-  setText: (text: string) => void;
+  setText: Dispatch<SetStateAction<string>>;
   checklistItems: ChecklistItem[];
-  setChecklistItems: (items: ChecklistItem[]) => void;
+  setChecklistItems: Dispatch<SetStateAction<ChecklistItem[]>>;
   rating: Rating | null;
-  setRating: (rating: Rating | null) => void;
+  setRating: Dispatch<SetStateAction<Rating | null>>;
   classification: ClassificationResult | null;
-  setClassification: (classification: ClassificationResult | null) => void;
+  setClassification: Dispatch<SetStateAction<ClassificationResult | null>>;
   similarProjects: SimilarProject[];
-  setSimilarProjects: (projects: SimilarProject[]) => void;
+  setSimilarProjects: Dispatch<SetStateAction<SimilarProject[]>>;
   recommendation: Recommendation | null;
-  setRecommendation: (rec: Recommendation | null) => void;
+  setRecommendation: Dispatch<SetStateAction<Recommendation | null>>;
   proposal: Proposal | null;
-  setProposal: (prop: Proposal | null) => void;
+  setProposal: Dispatch<SetStateAction<Proposal | null>>;
   budgetTable: BudgetTableRow[];
-  setBudgetTable: (table: BudgetTableRow[]) => void;
+  setBudgetTable: Dispatch<SetStateAction<BudgetTableRow[]>>;
   budgetStartYear: number;
-  setBudgetStartYear: (year: number) => void;
+  setBudgetStartYear: Dispatch<SetStateAction<number>>;
   budgetPlanningHorizon: number;
-  setBudgetPlanningHorizon: (years: number) => void;
+  setBudgetPlanningHorizon: Dispatch<SetStateAction<number>>;
   businessCaseData: BusinessCaseData | null;
-  setBusinessCaseData: (data: BusinessCaseData | null) => void;
+  setBusinessCaseData: Dispatch<SetStateAction<BusinessCaseData | null>>;
   reset: () => void;
 }
 

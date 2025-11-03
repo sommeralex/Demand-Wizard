@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useWizard } from '../../context/WizardContext';
+import { useWizard, type ChecklistItem } from '../../context/WizardContext';
 import { GOOD_EXAMPLE_TEXT, BAD_EXAMPLE_TEXT } from '../../../data/examples';
 import { DeleteApiCacheButton } from '../../components/DeleteApiCacheButton';
 
@@ -30,7 +30,7 @@ export default function StepPage() {
 
   const analyzeTextForChecklist = useCallback(async (inputText: string, reload: boolean = false) => {
     if (inputText.trim().length < 20) {
-      wizard.setChecklistItems(items => items.map(item => ({ ...item, checked: false })));
+      wizard.setChecklistItems(items => items.map((item: ChecklistItem) => ({ ...item, checked: false })));
       setIsChecklistLoading(false);
       return;
     }
@@ -44,7 +44,7 @@ export default function StepPage() {
         setIsChecklistLoading(false);
         return;
       }
-      wizard.setChecklistItems(prevItems => prevItems.map(item => ({ ...item, checked: !!analysis[item.id] })))
+      wizard.setChecklistItems(prevItems => prevItems.map((item: ChecklistItem) => ({ ...item, checked: !!analysis[item.id] })))
       setLastAnalyzedText(inputText); // Update lastAnalyzedText on successful analysis
     } catch (error) { console.error("Failed to analyze text:", error); alert("Failed to analyze text. Please try again."); } 
     finally { setIsLoading(false); setForceReload(false); }
