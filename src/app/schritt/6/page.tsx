@@ -377,6 +377,8 @@ const BusinessCaseAssumptions: React.FC<{
   };
   onAssumptionsChange: (assumptions: any) => void;
 }> = ({ opexTotal, capexTotal, yearlyOpex, onCalculate, assumptions, onAssumptionsChange }) => {
+  const [isMounted, setIsMounted] = useState(false);
+
   const planungshorizont = assumptions.planungshorizont;
   const mitarbeiterAnzahl = assumptions.mitarbeiterAnzahl;
   const stundenProTag = assumptions.stundenProTag;
@@ -384,6 +386,10 @@ const BusinessCaseAssumptions: React.FC<{
   const stundensatz = assumptions.stundensatz;
   const arbeitstageProJahr = assumptions.arbeitstageProJahr;
   const jaehrlicheUmsatzsteigerung = assumptions.jaehrlicheUmsatzsteigerung;
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const setPlanungshorizont = (value: number) => onAssumptionsChange({ ...assumptions, planungshorizont: value });
   const setMitarbeiterAnzahl = (value: number) => onAssumptionsChange({ ...assumptions, mitarbeiterAnzahl: value });
@@ -613,21 +619,23 @@ const BusinessCaseAssumptions: React.FC<{
         </div>
       </div>
 
-      <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-500 text-sm">
-        <p className="font-semibold text-blue-900">Berechneter jährlicher Gesamtnutzen:</p>
-        <p className="text-blue-800">
-          <span className="font-semibold">Einsparungen:</span> {mitarbeiterAnzahl} MA × {(stundenProTag * reduktionProzent / 100).toFixed(1)}h/Tag × {arbeitstageProJahr} Tage × {stundensatz} EUR/h
-          = <span className="font-bold">{formatCurrency(mitarbeiterAnzahl * (stundenProTag * reduktionProzent / 100) * arbeitstageProJahr * stundensatz)} EUR/Jahr</span>
-        </p>
-        {jaehrlicheUmsatzsteigerung > 0 && (
-          <p className="text-blue-800 mt-1">
-            <span className="font-semibold">+ Erlös:</span> {formatCurrency(jaehrlicheUmsatzsteigerung)} EUR/Jahr
+      {isMounted && (
+        <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-500 text-sm">
+          <p className="font-semibold text-blue-900">Berechneter jährlicher Gesamtnutzen:</p>
+          <p className="text-blue-800">
+            <span className="font-semibold">Einsparungen:</span> {mitarbeiterAnzahl} MA × {(stundenProTag * reduktionProzent / 100).toFixed(1)}h/Tag × {arbeitstageProJahr} Tage × {stundensatz} EUR/h
+            = <span className="font-bold">{formatCurrency(mitarbeiterAnzahl * (stundenProTag * reduktionProzent / 100) * arbeitstageProJahr * stundensatz)} EUR/Jahr</span>
           </p>
-        )}
-        <p className="text-blue-900 font-bold mt-2 pt-2 border-t border-blue-200">
-          = Gesamtnutzen: {formatCurrency((mitarbeiterAnzahl * (stundenProTag * reduktionProzent / 100) * arbeitstageProJahr * stundensatz) + jaehrlicheUmsatzsteigerung)} EUR/Jahr
-        </p>
-      </div>
+          {jaehrlicheUmsatzsteigerung > 0 && (
+            <p className="text-blue-800 mt-1">
+              <span className="font-semibold">+ Erlös:</span> {formatCurrency(jaehrlicheUmsatzsteigerung)} EUR/Jahr
+            </p>
+          )}
+          <p className="text-blue-900 font-bold mt-2 pt-2 border-t border-blue-200">
+            = Gesamtnutzen: {formatCurrency((mitarbeiterAnzahl * (stundenProTag * reduktionProzent / 100) * arbeitstageProJahr * stundensatz) + jaehrlicheUmsatzsteigerung)} EUR/Jahr
+          </p>
+        </div>
+      )}
 
       <div className="text-xs text-gray-500 italic mt-2">
         💡 Die Berechnung wird automatisch aktualisiert, wenn Sie die Werte ändern.
