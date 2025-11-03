@@ -1,32 +1,32 @@
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWizard } from '../../context/WizardContext';
 import ReactMarkdown from 'react-markdown';
 import React from 'react';
-import { Line } from 'react-chartjs-2';
+import { Chart } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  PointElement,
+  BarElement,
   LineElement,
+  PointElement,
   Title,
   Tooltip,
-  Legend,
-  Filler
+  Legend
 } from 'chart.js';
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  PointElement,
+  BarElement,
   LineElement,
+  PointElement,
   Title,
   Tooltip,
-  Legend,
-  Filler
+  Legend
 );
 
 interface Message { role: 'user' | 'model'; text: string; }
@@ -70,7 +70,10 @@ const formatCurrency = (num: number): string => {
 };
 
 // Break-Even Chart Component
-const BreakEvenChart: React.FC<{ businessCaseData: BusinessCaseData | null }> = ({ businessCaseData }) => {
+const BreakEvenChart: React.FC<{
+  businessCaseData: BusinessCaseData | null;
+  yearlyTotals: { [year: number]: { opex: number; capex: number } };
+}> = ({ businessCaseData, yearlyTotals }) => {
   if (!businessCaseData || !businessCaseData.cashflow) {
     return (
       <div className="text-center p-10 text-gray-500">
@@ -81,98 +84,101 @@ const BreakEvenChart: React.FC<{ businessCaseData: BusinessCaseData | null }> = 
   }
 
   const labels = businessCaseData.cashflow.map(cf => `Jahr ${cf.jahr}`);
+
+  console.log('BreakEvenChart - yearlyTotals:', yearlyTotals);
+  console.log('BreakEvenChart - cashflow:', businessCaseData.cashflow);
+
+  // Extract CAPEX, OPEX, and Nutzen for each year
+  const capexData = businessCaseData.cashflow.map(cf => {
+    if (cf.jahr === 0) return -businessCaseData.investition!.capex;
+    return 0;
+  });
+
+  const opexData = businessCaseData.cashflow.map(cf => {
+    if (cf.jahr === 0) return 0;
+    // Extract OPEX from description - handle numbers with spaces/dots/commas
+    const match = cf.beschreibung.match(/OPEX\s+([\d\s.,]+)\s*EUR/);
+    if (match) {
+      // Remove all non-digit characters except dots and commas
+      const cleanedNumber = match[1].replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '.');
+      const opexValue = parseFloat(cleanedNumber);
+      console.log(`Jahr ${cf.jahr}: Extracted OPEX = ${opexValue} from "${match[0]}"`);
+      return opexValue > 0 ? -opexValue : 0;
+    }
+    return 0;
+  });
+
+  console.log('BreakEvenChart - opexData:', opexData);
+
+  const nutzenData = businessCaseData.cashflow.map(cf => {
+    if (cf.jahr === 0) return 0;
+    // Extract Nutzen from description
+    const match = cf.beschreibung.match(/Nutzen (\d+)/);
+    return match ? parseFloat(match[1]) : 0;
+  });
+
+  // Get cumulative cashflow data
   const kumulativeData = businessCaseData.cashflow.map(cf => cf.kumulativ);
-  const nettoData = businessCaseData.cashflow.map(cf => cf.netto_cashflow);
 
-  // Create zero line for Break-Even visualization
-  const zeroLine = new Array(labels.length).fill(0);
-
-  // Find Break-Even point (where cumulative cashflow crosses zero)
+  // Find Break-Even year
   let breakEvenIndex = -1;
-  for (let i = 0; i < kumulativeData.length; i++) {
-    if (kumulativeData[i] >= 0) {
+  for (let i = 0; i < businessCaseData.cashflow.length; i++) {
+    if (businessCaseData.cashflow[i].kumulativ >= 0) {
       breakEvenIndex = i;
       break;
     }
   }
 
-  // Create a dataset for the Break-Even marker point
-  const breakEvenMarker = new Array(labels.length).fill(null);
-  if (breakEvenIndex >= 0) {
-    breakEvenMarker[breakEvenIndex] = 0; // Place marker at 0 on the break-even year
-  }
-
-  // Create separate datasets for loss zone (negative) and profit zone (positive)
-  // To avoid gaps, we need to include the transition point in both datasets
-  const lossZoneData = kumulativeData.map((value: number, index: number) => {
-    // Include this point if it's negative OR if it's the first positive point after negatives
-    if (value < 0) return value;
-    if (value >= 0 && index > 0 && kumulativeData[index - 1] < 0) return value; // Transition point
-    return null;
-  });
-
-  const profitZoneData = kumulativeData.map((value: number, index: number) => {
-    // Include this point if it's positive OR if it's the last negative point before positives
-    if (value >= 0) return value;
-    if (value < 0 && index < kumulativeData.length - 1 && kumulativeData[index + 1] >= 0) return value; // Transition point
-    return null;
-  });
-
   const data = {
     labels,
     datasets: [
       {
-        label: '📉 Verlustzone (Kumulativer Cashflow)',
-        data: lossZoneData,
-        borderColor: 'rgb(239, 68, 68)', // Red
-        backgroundColor: 'rgba(239, 68, 68, 0.15)', // Red fill for loss zone
-        fill: true,
-        tension: 0.3,
-        pointRadius: 6,
-        pointHoverRadius: 8,
-        pointBackgroundColor: 'rgb(239, 68, 68)',
+        type: 'bar' as const,
+        label: 'CAPEX (Investition)',
+        data: capexData,
+        backgroundColor: 'rgb(239, 68, 68)', // Red for costs
+        borderColor: 'rgb(239, 68, 68)',
+        borderWidth: 1,
+        order: 2,
       },
       {
-        label: '📈 Gewinnzone (Kumulativer Cashflow)',
-        data: profitZoneData,
-        borderColor: 'rgb(34, 197, 94)', // Green
-        backgroundColor: 'rgba(34, 197, 94, 0.15)', // Green fill for profit zone
-        fill: true,
-        tension: 0.3,
-        pointRadius: 6,
-        pointHoverRadius: 8,
-        pointBackgroundColor: 'rgb(34, 197, 94)',
+        type: 'bar' as const,
+        label: 'OPEX (Laufende Kosten)',
+        data: opexData,
+        backgroundColor: 'rgb(251, 146, 60)', // Orange for OPEX
+        borderColor: 'rgb(251, 146, 60)',
+        borderWidth: 1,
+        order: 2,
       },
       {
-        label: 'Netto Cashflow pro Jahr (Nutzen - OPEX)',
-        data: nettoData,
-        borderColor: 'rgb(59, 130, 246)', // Blue
+        type: 'bar' as const,
+        label: 'Nutzen (Einsparungen + Erlös)',
+        data: nutzenData,
+        backgroundColor: 'rgb(34, 197, 94)', // Green for benefits
+        borderColor: 'rgb(34, 197, 94)',
+        borderWidth: 1,
+        order: 2,
+      },
+      {
+        type: 'line' as const,
+        label: '📊 Kumulativer Cashflow (Break-Even)',
+        data: kumulativeData,
+        borderColor: 'rgb(59, 130, 246)', // Blue line
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        fill: false,
-        tension: 0.3,
-        pointRadius: 5,
-        pointHoverRadius: 7,
-        borderDash: [5, 5]
-      },
-      {
-        label: 'Break-Even Linie (0 EUR)',
-        data: zeroLine,
-        borderColor: 'rgb(55, 65, 81)', // Darker gray (gray-700) for better visibility
         borderWidth: 3,
-        borderDash: [8, 4],
-        pointRadius: 0,
-        fill: false,
-        tension: 0,
-      },
-      {
-        label: '🎯 Break-Even Punkt',
-        data: breakEvenMarker,
-        borderColor: 'rgb(239, 68, 68)', // Red
-        backgroundColor: 'rgb(239, 68, 68)',
-        pointRadius: 12,
-        pointHoverRadius: 15,
-        pointStyle: 'circle',
-        showLine: false, // Don't draw a line, just the point
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        pointBackgroundColor: kumulativeData.map((value: number, index: number) =>
+          index === breakEvenIndex ? 'rgb(239, 68, 68)' : 'rgb(59, 130, 246)'
+        ),
+        pointBorderColor: kumulativeData.map((value: number, index: number) =>
+          index === breakEvenIndex ? 'rgb(239, 68, 68)' : 'rgb(59, 130, 246)'
+        ),
+        pointRadius: kumulativeData.map((value: number, index: number) =>
+          index === breakEvenIndex ? 10 : 6
+        ),
+        order: 1,
+        yAxisID: 'y',
       }
     ],
   };
@@ -186,7 +192,7 @@ const BreakEvenChart: React.FC<{ businessCaseData: BusinessCaseData | null }> = 
       },
       title: {
         display: true,
-        text: 'Break-Even Analyse',
+        text: 'Business Case Analyse - Kosten vs. Nutzen',
         font: {
           size: 18,
           weight: 'bold' as const
@@ -200,22 +206,23 @@ const BreakEvenChart: React.FC<{ businessCaseData: BusinessCaseData | null }> = 
               label += ': ';
             }
             if (context.parsed.y !== null) {
-              label += new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(context.parsed.y);
+              const value = Math.abs(context.parsed.y);
+              label += new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
             }
             return label;
-          },
-          afterLabel: function(context: any) {
-            // Add Break-Even marker only for the red break-even point dataset (now at index 4)
-            if (context.datasetIndex === 4 && context.dataIndex === breakEvenIndex) {
-              return '🎯 BREAK-EVEN ERREICHT!';
-            }
-            return '';
           }
         }
       }
     },
     scales: {
+      x: {
+        stacked: true,
+        grid: {
+          display: false
+        }
+      },
       y: {
+        stacked: true,
         ticks: {
           callback: function(value: any) {
             return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
@@ -223,47 +230,37 @@ const BreakEvenChart: React.FC<{ businessCaseData: BusinessCaseData | null }> = 
         },
         grid: {
           color: function(context: any) {
-            // Make the 0-line more visible
             if (context.tick.value === 0) {
               return 'rgb(55, 65, 81)'; // Dark gray for 0-line
             }
-            return 'rgba(0, 0, 0, 0.05)'; // Light gray for other lines
+            return 'rgba(0, 0, 0, 0.1)';
           },
           lineWidth: function(context: any) {
-            // Make the 0-line thicker
             if (context.tick.value === 0) {
-              return 2;
+              return 3;
             }
             return 1;
           }
         }
-      },
-      x: {
-        grid: {
-          display: false
-        }
       }
-    },
-    interaction: {
-      intersect: false,
-      mode: 'index' as const,
-    },
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="h-[400px]">
-        <Line data={data} options={options} />
+        <Chart type='bar' data={data} options={options} />
       </div>
 
       {/* Chart Explanation */}
       <div className="p-3 bg-blue-50 border-l-4 border-blue-500 text-sm">
         <p className="font-semibold text-blue-900 mb-1">💡 Chart-Erklärung:</p>
         <p className="text-blue-800">
-          <span className="font-semibold">Break-Even</span> ist erreicht, wenn der kumulativer Cashflow die <span className="text-gray-600 font-semibold">graue 0-EUR-Linie</span> kreuzt {breakEvenIndex >= 0 && `(🎯 roter Punkt in Jahr ${businessCaseData.cashflow[breakEvenIndex].jahr})`}.
-          Die <span className="text-red-600 font-semibold">📉 rote Fläche</span> zeigt die <strong>Verlustzone</strong> (negative Cashflow),
-          die <span className="text-green-600 font-semibold">📈 grüne Fläche</span> zeigt die <strong>Gewinnzone</strong> (positive Cashflow).
-          Die <span className="text-blue-600 font-semibold">blaue gestrichelte Linie</span> zeigt den jährlichen Gewinn/Verlust.
+          <span className="text-red-600 font-semibold">Rote Balken</span> = CAPEX (Investitionskosten),
+          <span className="text-orange-600 font-semibold"> Orange Balken</span> = OPEX (laufende Kosten),
+          <span className="text-green-600 font-semibold"> Grüne Balken</span> = Nutzen (Einsparungen + Erlös).
+          <span className="text-blue-600 font-semibold"> Blaue Linie</span> = Kumulativer Cashflow.
+          {breakEvenIndex >= 0 && ` 🎯 Break-Even (roter Punkt) wird in Jahr ${businessCaseData.cashflow[breakEvenIndex].jahr} erreicht, wenn die blaue Linie die 0-EUR-Linie kreuzt.`}
         </p>
       </div>
 
@@ -303,28 +300,28 @@ const BreakEvenChart: React.FC<{ businessCaseData: BusinessCaseData | null }> = 
 
       {/* Key Metrics */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+        <div className="p-4 bg-gray-50 border-l-4 border-gray-500 rounded">
           <p className="text-sm text-gray-600">Break-Even Zeitpunkt</p>
-          <p className="text-2xl font-bold text-blue-700">
+          <p className="text-2xl font-bold text-gray-700">
             {businessCaseData.kennzahlen?.break_even_monat} Monate
           </p>
         </div>
         <div className="p-4 bg-green-50 border-l-4 border-green-500 rounded">
-          <p className="text-sm text-gray-600">ROI über {businessCaseData.planungshorizont_jahre} Jahre</p>
-          <p className="text-2xl font-bold text-green-700">
-            {businessCaseData.kennzahlen?.roi_prozent}%
-          </p>
-        </div>
-        <div className="p-4 bg-purple-50 border-l-4 border-purple-500 rounded">
           <p className="text-sm text-gray-600">Gesamtnutzen (über {businessCaseData.planungshorizont_jahre} Jahre)</p>
-          <p className="text-2xl font-bold text-purple-700">
+          <p className="text-2xl font-bold text-green-700">
             {formatCurrency(businessCaseData.kennzahlen?.gesamtnutzen || 0)} EUR
           </p>
         </div>
-        <div className="p-4 bg-orange-50 border-l-4 border-orange-500 rounded">
-          <p className="text-sm text-gray-600">Netto Gewinn</p>
-          <p className="text-2xl font-bold text-orange-700">
-            {formatCurrency(businessCaseData.kennzahlen?.netto_gewinn || 0)} EUR
+        <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded">
+          <p className="text-sm text-gray-600">Gesamtkosten (CAPEX + OPEX)</p>
+          <p className="text-2xl font-bold text-red-700">
+            {formatCurrency(businessCaseData.kennzahlen?.gesamtkosten || 0)} EUR
+          </p>
+        </div>
+        <div className="p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+          <p className="text-sm text-gray-600">ROI / Netto Gewinn</p>
+          <p className="text-2xl font-bold text-blue-700">
+            {businessCaseData.kennzahlen?.roi_prozent}% / {formatCurrency(businessCaseData.kennzahlen?.netto_gewinn || 0)} EUR
           </p>
         </div>
       </div>
@@ -368,6 +365,7 @@ const BreakEvenChart: React.FC<{ businessCaseData: BusinessCaseData | null }> = 
 const BusinessCaseAssumptions: React.FC<{
   opexTotal: number;
   capexTotal: number;
+  yearlyOpex: { [year: number]: { opex: number; capex: number } };
   onCalculate: (assumptions: any) => void;
   assumptions: {
     planungshorizont: number;
@@ -379,7 +377,7 @@ const BusinessCaseAssumptions: React.FC<{
     jaehrlicheUmsatzsteigerung: number;
   };
   onAssumptionsChange: (assumptions: any) => void;
-}> = ({ opexTotal, capexTotal, onCalculate, assumptions, onAssumptionsChange }) => {
+}> = ({ opexTotal, capexTotal, yearlyOpex, onCalculate, assumptions, onAssumptionsChange }) => {
   const planungshorizont = assumptions.planungshorizont;
   const mitarbeiterAnzahl = assumptions.mitarbeiterAnzahl;
   const stundenProTag = assumptions.stundenProTag;
@@ -418,23 +416,29 @@ const BusinessCaseAssumptions: React.FC<{
     });
 
     // Jahre 1 bis Planungshorizont
+    console.log('calculateBusinessCase - yearlyOpex:', yearlyOpex);
     for (let jahr = 1; jahr <= planungshorizont; jahr++) {
-      const nettoCashflow = gesamtnutzenProJahr - opexTotal;
+      // Use actual yearly OPEX if available, otherwise fall back to average
+      const yearlyOpexValue = yearlyOpex[jahr]?.opex || opexTotal;
+      console.log(`calculateBusinessCase - Jahr ${jahr}: yearlyOpex[${jahr}] =`, yearlyOpex[jahr], `yearlyOpexValue = ${yearlyOpexValue}`);
+      const nettoCashflow = gesamtnutzenProJahr - yearlyOpexValue;
       kumulativ += nettoCashflow;
       cashflow.push({
         jahr,
         netto_cashflow: nettoCashflow,
         kumulativ,
-        beschreibung: `Nutzen ${gesamtnutzenProJahr.toFixed(0)} EUR (Einsparungen ${jaehrlicheEinsparungen.toFixed(0)} + Erlös ${jaehrlicheUmsatzsteigerung.toFixed(0)}) - OPEX ${opexTotal} EUR`
+        beschreibung: `Nutzen ${gesamtnutzenProJahr.toFixed(0)} EUR (Einsparungen ${jaehrlicheEinsparungen.toFixed(0)} + Erlös ${jaehrlicheUmsatzsteigerung.toFixed(0)}) - OPEX ${yearlyOpexValue.toFixed(0)} EUR`
       });
     }
 
-    // Break-Even Monat berechnen
+    // Break-Even Monat berechnen (using actual yearly OPEX)
     let breakEvenMonat = 0;
     let kumulativMonatlich = -capexTotal;
-    const monatlicheEinsparung = (gesamtnutzenProJahr - opexTotal) / 12;
 
     for (let monat = 1; monat <= planungshorizont * 12; monat++) {
+      const jahr = Math.ceil(monat / 12);
+      const yearlyOpexValue = yearlyOpex[jahr]?.opex || opexTotal;
+      const monatlicheEinsparung = (gesamtnutzenProJahr - yearlyOpexValue) / 12;
       kumulativMonatlich += monatlicheEinsparung;
       if (kumulativMonatlich >= 0 && breakEvenMonat === 0) {
         breakEvenMonat = monat;
@@ -442,7 +446,12 @@ const BusinessCaseAssumptions: React.FC<{
       }
     }
 
-    const gesamtkosten = capexTotal + (opexTotal * planungshorizont);
+    // Calculate total OPEX costs using actual yearly values
+    let totalOpexCosts = 0;
+    for (let jahr = 1; jahr <= planungshorizont; jahr++) {
+      totalOpexCosts += yearlyOpex[jahr]?.opex || opexTotal;
+    }
+    const gesamtkosten = capexTotal + totalOpexCosts;
     const gesamtnutzen = gesamtnutzenProJahr * planungshorizont;
     const nettoGewinn = gesamtnutzen - gesamtkosten;
     const roi = ((nettoGewinn / gesamtkosten) * 100).toFixed(0);
@@ -490,7 +499,7 @@ const BusinessCaseAssumptions: React.FC<{
   useEffect(() => {
     // Automatische Berechnung bei Änderungen
     calculateBusinessCase();
-  }, [planungshorizont, mitarbeiterAnzahl, stundenProTag, reduktionProzent, stundensatz, arbeitstageProJahr, jaehrlicheUmsatzsteigerung, opexTotal, capexTotal]);
+  }, [planungshorizont, mitarbeiterAnzahl, stundenProTag, reduktionProzent, stundensatz, arbeitstageProJahr, jaehrlicheUmsatzsteigerung, opexTotal, capexTotal, yearlyOpex]);
 
   return (
     <div className="space-y-4 p-4 bg-white rounded-lg border">
@@ -609,24 +618,21 @@ const BusinessCaseAssumptions: React.FC<{
         <p className="font-semibold text-blue-900">Berechneter jährlicher Gesamtnutzen:</p>
         <p className="text-blue-800">
           <span className="font-semibold">Einsparungen:</span> {mitarbeiterAnzahl} MA × {(stundenProTag * reduktionProzent / 100).toFixed(1)}h/Tag × {arbeitstageProJahr} Tage × {stundensatz} EUR/h
-          = <span className="font-bold">{(mitarbeiterAnzahl * (stundenProTag * reduktionProzent / 100) * arbeitstageProJahr * stundensatz).toLocaleString('de-DE')} EUR/Jahr</span>
+          = <span className="font-bold">{formatCurrency(mitarbeiterAnzahl * (stundenProTag * reduktionProzent / 100) * arbeitstageProJahr * stundensatz)} EUR/Jahr</span>
         </p>
         {jaehrlicheUmsatzsteigerung > 0 && (
           <p className="text-blue-800 mt-1">
-            <span className="font-semibold">+ Erlös:</span> {jaehrlicheUmsatzsteigerung.toLocaleString('de-DE')} EUR/Jahr
+            <span className="font-semibold">+ Erlös:</span> {formatCurrency(jaehrlicheUmsatzsteigerung)} EUR/Jahr
           </p>
         )}
         <p className="text-blue-900 font-bold mt-2 pt-2 border-t border-blue-200">
-          = Gesamtnutzen: {((mitarbeiterAnzahl * (stundenProTag * reduktionProzent / 100) * arbeitstageProJahr * stundensatz) + jaehrlicheUmsatzsteigerung).toLocaleString('de-DE')} EUR/Jahr
+          = Gesamtnutzen: {formatCurrency((mitarbeiterAnzahl * (stundenProTag * reduktionProzent / 100) * arbeitstageProJahr * stundensatz) + jaehrlicheUmsatzsteigerung)} EUR/Jahr
         </p>
       </div>
 
-      <button
-        onClick={calculateBusinessCase}
-        className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-      >
-        Business Case aktualisieren
-      </button>
+      <div className="text-xs text-gray-500 italic mt-2">
+        💡 Die Berechnung wird automatisch aktualisiert, wenn Sie die Werte ändern.
+      </div>
     </div>
   );
 };
@@ -793,22 +799,31 @@ export default function StepPage() {
 
   // Calculate totals from budget table
   const calculateBudgetTotals = () => {
-    // Calculate totals per year
-    const yearlyTotals: { [year: number]: { opex: number; capex: number } } = {};
+    // Calculate totals per calendar year first
+    const yearlyTotalsByCalendarYear: { [year: number]: { opex: number; capex: number } } = {};
 
     wizard.budgetTable.forEach(row => {
       const year = row.jahr;
       const value = parseFloat(row.wert.replace(/[^\d.-]/g, '')) || 0;
 
-      if (!yearlyTotals[year]) {
-        yearlyTotals[year] = { opex: 0, capex: 0 };
+      if (!yearlyTotalsByCalendarYear[year]) {
+        yearlyTotalsByCalendarYear[year] = { opex: 0, capex: 0 };
       }
 
       if (row.kostentyp === 'OPEX') {
-        yearlyTotals[year].opex += value;
+        yearlyTotalsByCalendarYear[year].opex += value;
       } else {
-        yearlyTotals[year].capex += value;
+        yearlyTotalsByCalendarYear[year].capex += value;
       }
+    });
+
+    // Convert calendar years to relative years (1, 2, 3, ...)
+    const sortedYears = Object.keys(yearlyTotalsByCalendarYear).map(Number).sort((a, b) => a - b);
+    const yearlyTotals: { [year: number]: { opex: number; capex: number } } = {};
+
+    sortedYears.forEach((calendarYear, index) => {
+      const relativeYear = index + 1; // Year 1, 2, 3, ...
+      yearlyTotals[relativeYear] = yearlyTotalsByCalendarYear[calendarYear];
     });
 
     // Calculate overall totals
@@ -833,7 +848,7 @@ export default function StepPage() {
     };
   };
 
-  const { opexSum, capexSum, avgOpexPerYear } = calculateBudgetTotals();
+  const { opexSum, capexSum, avgOpexPerYear, yearlyTotals } = useMemo(() => calculateBudgetTotals(), [wizard.budgetTable, wizard.budgetPlanningHorizon]);
 
   useEffect(() => {
     setMounted(true);
@@ -930,7 +945,7 @@ export default function StepPage() {
                 </div>
               </div>
 
-              <BreakEvenChart businessCaseData={wizard.businessCaseData} />
+              <BreakEvenChart businessCaseData={wizard.businessCaseData} yearlyTotals={yearlyTotals} />
             </>
           )}
         </div>
@@ -947,6 +962,7 @@ export default function StepPage() {
           <BusinessCaseAssumptions
             opexTotal={avgOpexPerYear}
             capexTotal={capexSum}
+            yearlyOpex={yearlyTotals}
             onCalculate={handleBusinessCaseUpdate}
             assumptions={assumptions}
             onAssumptionsChange={setAssumptions}
