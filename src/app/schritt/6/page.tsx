@@ -924,7 +924,7 @@ export default function StepPage() {
                   </div>
                   <div>
                     <p className="text-gray-600">OPEX Gesamt (über {wizard.budgetPlanningHorizon} Jahre)</p>
-                    <p className="text-xl font-bold text-green-600">{formatCurrency(opexSum)} EUR</p>
+                    <p className="text-xl font-bold text-orange-600">{formatCurrency(opexSum)} EUR</p>
                     <p className="text-xs text-gray-500 mt-1">Ø {formatCurrency(avgOpexPerYear)} EUR/Jahr</p>
                   </div>
                 </div>
