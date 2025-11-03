@@ -18,38 +18,108 @@ interface BudgetTableRow {
   kostentyp: 'OPEX' | 'CAPEX';
   beschreibung: string;
   wert: string;
+  jahr: number;
 }
 
 // Editable Budget Table Component
-const EditableBudgetTable: React.FC<{ rows: BudgetTableRow[], onRowsChange: (rows: BudgetTableRow[]) => void }> = ({ rows, onRowsChange }) => {
+const EditableBudgetTable: React.FC<{
+  rows: BudgetTableRow[],
+  onRowsChange: (rows: BudgetTableRow[]) => void,
+  startYear: number,
+  planningHorizon: number
+}> = ({ rows, onRowsChange, startYear, planningHorizon }) => {
   const addRow = () => {
     const newRow: BudgetTableRow = {
       id: Date.now().toString(),
       kostentyp: 'OPEX',
       beschreibung: '',
-      wert: ''
+      wert: '',
+      jahr: startYear
     };
     onRowsChange([...rows, newRow]);
   };
 
-  const deleteRow = (id: string) => {
-    onRowsChange(rows.filter(row => row.id !== id));
+  const copyRow = (rowToCopy: BudgetTableRow) => {
+    const currentIndex = rows.findIndex(r => r.id === rowToCopy.id);
+    const newJahr = rowToCopy.jahr + 1;
+
+    // Check if year is within planning horizon
+    if (newJahr > startYear + planningHorizon - 1) {
+      alert(`Jahr ${newJahr} überschreitet den Planungshorizont (${startYear} - ${startYear + planningHorizon - 1})`);
+      return;
+    }
+
+    const newRow: BudgetTableRow = {
+      id: Date.now().toString(),
+      kostentyp: rowToCopy.kostentyp,
+      beschreibung: rowToCopy.beschreibung,
+      wert: rowToCopy.wert,
+      jahr: newJahr
+    };
+
+    // Insert the copied row right after the original
+    const newRows = [...rows];
+    newRows.splice(currentIndex + 1, 0, newRow);
+    onRowsChange(newRows);
   };
 
-  const updateRow = (id: string, field: keyof BudgetTableRow, value: string) => {
+  const deleteRow = (id: string) => {
+    const rowToDelete = rows.find(r => r.id === id);
+    const confirmMessage = rowToDelete
+      ? `Möchten Sie diese Zeile wirklich löschen?\n\n${rowToDelete.kostentyp}: ${rowToDelete.beschreibung} (${rowToDelete.wert} EUR, Jahr ${rowToDelete.jahr})`
+      : 'Möchten Sie diese Zeile wirklich löschen?';
+
+    if (window.confirm(confirmMessage)) {
+      onRowsChange(rows.filter(row => row.id !== id));
+    }
+  };
+
+  const updateRow = (id: string, field: keyof BudgetTableRow, value: string | number) => {
     onRowsChange(rows.map(row =>
       row.id === id ? { ...row, [field]: value } : row
     ));
   };
 
   const calculateSummary = () => {
+    // Calculate totals per year
+    const yearlyTotals: { [year: number]: { opex: number; capex: number } } = {};
+
+    rows.forEach(row => {
+      const year = row.jahr;
+      const value = parseFloat(row.wert.replace(/[^\d.-]/g, '')) || 0;
+
+      if (!yearlyTotals[year]) {
+        yearlyTotals[year] = { opex: 0, capex: 0 };
+      }
+
+      if (row.kostentyp === 'OPEX') {
+        yearlyTotals[year].opex += value;
+      } else {
+        yearlyTotals[year].capex += value;
+      }
+    });
+
+    // Calculate overall totals
     const opexSum = rows
       .filter(r => r.kostentyp === 'OPEX')
       .reduce((sum, r) => sum + (parseFloat(r.wert.replace(/[^\d.-]/g, '')) || 0), 0);
     const capexSum = rows
       .filter(r => r.kostentyp === 'CAPEX')
       .reduce((sum, r) => sum + (parseFloat(r.wert.replace(/[^\d.-]/g, '')) || 0), 0);
-    return { opexSum, capexSum, total: opexSum + capexSum };
+
+    // Calculate average annual OPEX (for years where OPEX exists)
+    const yearsWithOpex = Object.keys(yearlyTotals).filter(y => yearlyTotals[parseInt(y)].opex > 0);
+    const avgOpexPerYear = yearsWithOpex.length > 0
+      ? opexSum / yearsWithOpex.length
+      : 0;
+
+    return {
+      opexSum,
+      capexSum,
+      total: opexSum + capexSum,
+      yearlyTotals,
+      avgOpexPerYear
+    };
   };
 
   const summary = calculateSummary();
@@ -70,16 +140,19 @@ const EditableBudgetTable: React.FC<{ rows: BudgetTableRow[], onRowsChange: (row
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Jahr
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Kostentyp
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Beschreibung der Tätigkeit
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Wert (EUR)
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Aktionen
               </th>
             </tr>
@@ -87,7 +160,18 @@ const EditableBudgetTable: React.FC<{ rows: BudgetTableRow[], onRowsChange: (row
           <tbody className="bg-white divide-y divide-gray-200">
             {rows.map((row) => (
               <tr key={row.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-4 py-4 whitespace-nowrap">
+                  <select
+                    value={row.jahr}
+                    onChange={(e) => updateRow(row.id, 'jahr', parseInt(e.target.value))}
+                    className="border rounded px-2 py-1 w-full"
+                  >
+                    {Array.from({ length: planningHorizon }, (_, i) => startYear + i).map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </td>
+                <td className="px-4 py-4 whitespace-nowrap">
                   <select
                     value={row.kostentyp}
                     onChange={(e) => updateRow(row.id, 'kostentyp', e.target.value)}
@@ -106,7 +190,7 @@ const EditableBudgetTable: React.FC<{ rows: BudgetTableRow[], onRowsChange: (row
                     placeholder="z.B. Anschaffung eines Neuwagens"
                   />
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-4 py-4 whitespace-nowrap">
                   <input
                     type="text"
                     value={row.wert}
@@ -115,31 +199,73 @@ const EditableBudgetTable: React.FC<{ rows: BudgetTableRow[], onRowsChange: (row
                     placeholder="z.B. 50.000"
                   />
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <button
-                    onClick={() => deleteRow(row.id)}
-                    className="text-red-600 hover:text-red-800"
-                  >
-                    Löschen
-                  </button>
+                <td className="px-4 py-4 whitespace-nowrap">
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => copyRow(row)}
+                      className="text-blue-600 hover:text-blue-800 text-sm"
+                      title="Zeile kopieren (Jahr +1)"
+                    >
+                      Kopieren
+                    </button>
+                    <button
+                      onClick={() => deleteRow(row.id)}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
+                      Löschen
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
-          <tfoot className="bg-gray-100 font-semibold">
+          <tfoot className="bg-gray-100 font-semibold text-sm">
+            {/* Yearly breakdown */}
+            {Object.keys(summary.yearlyTotals)
+              .sort((a, b) => parseInt(a) - parseInt(b))
+              .map(year => (
+                <React.Fragment key={year}>
+                  {summary.yearlyTotals[parseInt(year)].opex > 0 && (
+                    <tr className="text-blue-700">
+                      <td className="px-4 py-2" colSpan={3}>OPEX {year}</td>
+                      <td className="px-4 py-2">{summary.yearlyTotals[parseInt(year)].opex.toLocaleString('de-DE')} EUR</td>
+                      <td></td>
+                    </tr>
+                  )}
+                  {summary.yearlyTotals[parseInt(year)].capex > 0 && (
+                    <tr className="text-green-700">
+                      <td className="px-4 py-2" colSpan={3}>CAPEX {year}</td>
+                      <td className="px-4 py-2">{summary.yearlyTotals[parseInt(year)].capex.toLocaleString('de-DE')} EUR</td>
+                      <td></td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+
+            {/* Divider */}
             <tr>
-              <td className="px-6 py-4" colSpan={2}>OPEX Summe</td>
-              <td className="px-6 py-4">{summary.opexSum.toLocaleString('de-DE')} EUR</td>
+              <td colSpan={5} className="border-t-2 border-gray-400"></td>
+            </tr>
+
+            {/* Overall totals */}
+            <tr className="bg-blue-100">
+              <td className="px-4 py-3" colSpan={3}>OPEX Gesamt (über {planningHorizon} Jahre)</td>
+              <td className="px-4 py-3">{summary.opexSum.toLocaleString('de-DE')} EUR</td>
               <td></td>
             </tr>
-            <tr>
-              <td className="px-6 py-4" colSpan={2}>CAPEX Summe</td>
-              <td className="px-6 py-4">{summary.capexSum.toLocaleString('de-DE')} EUR</td>
+            <tr className="bg-blue-50 text-xs">
+              <td className="px-4 py-2" colSpan={3}>↳ Ø OPEX pro Jahr</td>
+              <td className="px-4 py-2">{summary.avgOpexPerYear.toLocaleString('de-DE')} EUR</td>
+              <td></td>
+            </tr>
+            <tr className="bg-green-100">
+              <td className="px-4 py-3" colSpan={3}>CAPEX Gesamt</td>
+              <td className="px-4 py-3">{summary.capexSum.toLocaleString('de-DE')} EUR</td>
               <td></td>
             </tr>
             <tr className="bg-gray-200">
-              <td className="px-6 py-4" colSpan={2}>Gesamtsumme</td>
-              <td className="px-6 py-4">{summary.total.toLocaleString('de-DE')} EUR</td>
+              <td className="px-4 py-4" colSpan={3}>Gesamtsumme (CAPEX + OPEX gesamt)</td>
+              <td className="px-4 py-4">{summary.total.toLocaleString('de-DE')} EUR</td>
               <td></td>
             </tr>
           </tfoot>
@@ -259,6 +385,8 @@ export default function StepPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(50); // percentage
+  const [isResizing, setIsResizing] = useState(false);
   const currentStep = 5;
 
   useEffect(() => {
@@ -268,10 +396,38 @@ export default function StepPage() {
     }
   }, [currentStep, wizard]);
 
+  // Helper function to extract planning horizon from demand text
+  const extractPlanningHorizon = (text: string): number => {
+    const match = text.match(/(\d+)\s*(jahre?|year)/i);
+    if (match) {
+      const years = parseInt(match[1]);
+      if ([3, 5, 7].includes(years)) return years;
+    }
+    return 3; // Default
+  };
+
+  // Helper function to extract start year from demand text
+  const extractStartYear = (text: string): number => {
+    const currentYear = new Date().getFullYear();
+    const match = text.match(/(20\d{2})/);
+    if (match) {
+      const year = parseInt(match[1]);
+      if (year >= currentYear && year <= currentYear + 10) return year;
+    }
+    return currentYear; // Default
+  };
+
   // Auto-analyze demand and populate table on mount if not already populated
   useEffect(() => {
     const analyzeAndPopulateTable = async () => {
       if (wizard.text && wizard.budgetTable.length === 0) {
+        // Extract planning horizon and start year from demand text
+        const extractedPlanningHorizon = extractPlanningHorizon(wizard.text);
+        const extractedStartYear = extractStartYear(wizard.text);
+
+        wizard.setBudgetPlanningHorizon(extractedPlanningHorizon);
+        wizard.setBudgetStartYear(extractedStartYear);
+
         setIsAnalyzing(true);
         try {
           const res = await fetch('/api/budget-assistant', {
@@ -299,7 +455,8 @@ export default function StepPage() {
                   id: `opex-${idx}-${Date.now()}`,
                   kostentyp: 'OPEX',
                   beschreibung: pos.taetigkeit || '',
-                  wert: pos.kosten?.toString() || ''
+                  wert: pos.kosten?.toString() || '',
+                  jahr: pos.jahr || extractedStartYear
                 });
               });
             }
@@ -311,7 +468,8 @@ export default function StepPage() {
                   id: `capex-${idx}-${Date.now()}`,
                   kostentyp: 'CAPEX',
                   beschreibung: pos.taetigkeit || '',
-                  wert: pos.kosten?.toString() || ''
+                  wert: pos.kosten?.toString() || '',
+                  jahr: pos.jahr || extractedStartYear
                 });
               });
             }
@@ -344,7 +502,46 @@ export default function StepPage() {
     router.push('/schritt/6');
   };
 
+  const handleMouseDown = () => {
+    setIsResizing(true);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+
+      const windowWidth = window.innerWidth;
+      const newWidth = ((windowWidth - e.clientX) / windowWidth) * 100;
+
+      // Constrain between 25% and 75%
+      if (newWidth >= 25 && newWidth <= 75) {
+        setSidebarWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
+
   const handleReanalyze = async () => {
+    // Extract updated planning parameters
+    const extractedPlanningHorizon = extractPlanningHorizon(wizard.text);
+    const extractedStartYear = extractStartYear(wizard.text);
+
+    wizard.setBudgetPlanningHorizon(extractedPlanningHorizon);
+    wizard.setBudgetStartYear(extractedStartYear);
+
     setIsAnalyzing(true);
     try {
       const res = await fetch('/api/budget-assistant', {
@@ -370,7 +567,8 @@ export default function StepPage() {
               id: `opex-${idx}-${Date.now()}`,
               kostentyp: 'OPEX',
               beschreibung: pos.taetigkeit || '',
-              wert: pos.kosten?.toString() || ''
+              wert: pos.kosten?.toString() || '',
+              jahr: pos.jahr || extractedStartYear
             });
           });
         }
@@ -381,7 +579,8 @@ export default function StepPage() {
               id: `capex-${idx}-${Date.now()}`,
               kostentyp: 'CAPEX',
               beschreibung: pos.taetigkeit || '',
-              wert: pos.kosten?.toString() || ''
+              wert: pos.kosten?.toString() || '',
+              jahr: pos.jahr || extractedStartYear
             });
           });
         }
@@ -408,9 +607,9 @@ export default function StepPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="grid grid-cols-2 flex-grow overflow-hidden">
+      <div className="flex flex-grow overflow-hidden relative">
         {/* Left side - Demand Text and Budget Table */}
-        <div className="col-span-1 p-8 overflow-y-auto bg-white">
+        <div className="p-8 overflow-y-auto bg-white" style={{ width: `${100 - sidebarWidth}%` }}>
           <h2 className="text-2xl font-semibold mb-6">Schritt 5: Budget-Analyse</h2>
 
           {/* Editable Demand Text */}
@@ -436,6 +635,44 @@ export default function StepPage() {
             </div>
           ) : (
             <>
+              {/* Planning Horizon and Start Year Controls */}
+              <div className="mb-6 p-4 bg-gray-50 border rounded-md">
+                <h3 className="font-semibold mb-3">Budget-Parameter</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Startjahr
+                    </label>
+                    <select
+                      value={wizard.budgetStartYear}
+                      onChange={(e) => wizard.setBudgetStartYear(parseInt(e.target.value))}
+                      className="w-full p-2 border rounded-md"
+                    >
+                      {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
+                        <option key={year} value={year}>{year}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Planungshorizont
+                    </label>
+                    <select
+                      value={wizard.budgetPlanningHorizon}
+                      onChange={(e) => wizard.setBudgetPlanningHorizon(parseInt(e.target.value))}
+                      className="w-full p-2 border rounded-md"
+                    >
+                      <option value={3}>3 Jahre</option>
+                      <option value={5}>5 Jahre</option>
+                      <option value={7}>7 Jahre</option>
+                    </select>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Diese Werte wurden aus Ihrer Demand-Beschreibung extrahiert und können angepasst werden.
+                </p>
+              </div>
+
               <div className="mb-4 p-4 bg-blue-50 border-l-4 border-blue-500 text-sm">
                 <p className="font-semibold mb-2">Hinweis:</p>
                 <p>Diese Tabelle wurde automatisch aus Ihrer Demand-Beschreibung generiert. Sie können alle Werte bearbeiten und Zeilen hinzufügen oder löschen.</p>
@@ -443,6 +680,8 @@ export default function StepPage() {
               <EditableBudgetTable
                 rows={wizard.budgetTable}
                 onRowsChange={wizard.setBudgetTable}
+                startYear={wizard.budgetStartYear}
+                planningHorizon={wizard.budgetPlanningHorizon}
               />
               <button
                 onClick={handleReanalyze}
@@ -455,13 +694,21 @@ export default function StepPage() {
           )}
         </div>
 
+        {/* Resize Handle */}
+        <div
+          className="w-1 bg-gray-300 hover:bg-blue-500 cursor-col-resize transition-colors"
+          onMouseDown={handleMouseDown}
+          style={{ cursor: isResizing ? 'col-resize' : 'ew-resize' }}
+        />
+
         {/* Right side - Budget Assistant Chat */}
-        <aside className="col-span-1 p-8 bg-gray-100 border-l overflow-y-auto">
+        <aside className="p-8 bg-gray-100 overflow-y-auto" style={{ width: `${sidebarWidth}%` }}>
           <BudgetChat demand={{ description: wizard.text }} budgetTable={wizard.budgetTable} />
         </aside>
+      </div>
 
-        {/* Bottom navigation */}
-        <div className="col-span-2 border-t p-4 flex justify-between items-center bg-white">
+      {/* Bottom navigation */}
+      <div className="border-t p-4 flex justify-between items-center bg-white">
           <button
             onClick={() => router.back()}
             disabled={currentStep <= 1}
@@ -483,7 +730,6 @@ export default function StepPage() {
             {isLoading ? <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div> : null}
             Weiter
           </button>
-        </div>
       </div>
     </div>
   );

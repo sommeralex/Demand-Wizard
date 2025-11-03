@@ -4,7 +4,7 @@ import React from 'react';
 import { useWizard } from '../context/WizardContext';
 
 export function CacheButtons() {
-  const { clearWizardData } = useWizard();
+  const wizard = useWizard();
 
   const handleClearApiCache = async () => {
     try {
@@ -27,7 +27,7 @@ export function CacheButtons() {
   return (
     <div className="flex space-x-2 p-2 justify-end">
       <button
-        onClick={clearWizardData}
+        onClick={() => wizard.reset()}
         className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
       >
         Sitzungsdaten löschen

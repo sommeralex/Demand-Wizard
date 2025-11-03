@@ -10,8 +10,8 @@ const steps = [
   { number: 3, title: 'Strategie-Check' },
   { number: 4, title: 'Portfolio-Analyse' },
   { number: 5, title: 'Budget' },
-  { number: 6, title: 'Antrag erstellen' },
-  // Step 6 will be added later
+  { number: 6, title: 'Business Case' },
+  { number: 7, title: 'Antrag erstellen' },
 ];
 
 export const Stepper = () => {

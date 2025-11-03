@@ -9,7 +9,17 @@ interface SimilarProject { id: string; title: string; status: string; similarity
 interface Recommendation { empfehlung_aktion: string; target_id: string | null; zusammenfassung_benutzer: string; }
 interface Proposal { markdown: string; }
 interface ChecklistItem { id: string; text: string; checked: boolean; }
-interface BudgetTableRow { id: string; kostentyp: 'OPEX' | 'CAPEX'; beschreibung: string; wert: string; }
+interface BudgetTableRow { id: string; kostentyp: 'OPEX' | 'CAPEX'; beschreibung: string; wert: string; jahr: number; }
+interface BusinessCaseData {
+  planungshorizont_jahre?: number;
+  investition?: any;
+  nutzen?: any;
+  cashflow?: any[];
+  kennzahlen?: any;
+  empfehlung?: string;
+  risiken?: string[];
+  optimierungen?: string[];
+}
 
 interface WizardContextType {
   step: number;
@@ -30,6 +40,12 @@ interface WizardContextType {
   setProposal: (prop: Proposal | null) => void;
   budgetTable: BudgetTableRow[];
   setBudgetTable: (table: BudgetTableRow[]) => void;
+  budgetStartYear: number;
+  setBudgetStartYear: (year: number) => void;
+  budgetPlanningHorizon: number;
+  setBudgetPlanningHorizon: (years: number) => void;
+  businessCaseData: BusinessCaseData | null;
+  setBusinessCaseData: (data: BusinessCaseData | null) => void;
   reset: () => void;
 }
 
@@ -71,16 +87,19 @@ export const WizardProvider = ({ children }: { children: ReactNode }) => {
     ]
   );
   const [budgetTable, setBudgetTable] = useState<BudgetTableRow[]>(initialState.budgetTable || []);
+  const [budgetStartYear, setBudgetStartYear] = useState<number>(initialState.budgetStartYear || new Date().getFullYear());
+  const [budgetPlanningHorizon, setBudgetPlanningHorizon] = useState<number>(initialState.budgetPlanningHorizon || 3);
+  const [businessCaseData, setBusinessCaseData] = useState<BusinessCaseData | null>(initialState.businessCaseData || null);
 
   // Effect to save state to localStorage whenever any relevant state changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const stateToSave = {
-        step, text, rating, classification, similarProjects, recommendation, proposal, checklistItems, budgetTable
+        step, text, rating, classification, similarProjects, recommendation, proposal, checklistItems, budgetTable, budgetStartYear, budgetPlanningHorizon, businessCaseData
       };
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));
     }
-  }, [step, text, rating, classification, similarProjects, recommendation, proposal, checklistItems, budgetTable]);
+  }, [step, text, rating, classification, similarProjects, recommendation, proposal, checklistItems, budgetTable, budgetStartYear, budgetPlanningHorizon, businessCaseData]);
 
 
   const reset = () => {
@@ -97,6 +116,9 @@ export const WizardProvider = ({ children }: { children: ReactNode }) => {
       { id: "user_group", text: "Betroffene Benutzergruppe", checked: false },
     ]);
     setBudgetTable([]);
+    setBudgetStartYear(new Date().getFullYear());
+    setBudgetPlanningHorizon(3);
+    setBusinessCaseData(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem(LOCAL_STORAGE_KEY);
     }
@@ -113,6 +135,9 @@ export const WizardProvider = ({ children }: { children: ReactNode }) => {
       recommendation, setRecommendation,
       proposal, setProposal,
       budgetTable, setBudgetTable,
+      budgetStartYear, setBudgetStartYear,
+      budgetPlanningHorizon, setBudgetPlanningHorizon,
+      businessCaseData, setBusinessCaseData,
       reset
     }}>
       {children}
