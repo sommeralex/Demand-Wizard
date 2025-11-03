@@ -4,7 +4,7 @@ import { useApiCache } from '../app/context/ApiCacheContext';
 import { generateContent as originalGenerateContent, startChat as originalStartChat } from './llm';
 
 export function useCachedLlm() {
-  const { getCache, setCache } = useApiCache();
+  const { getCache, updateCache } = useApiCache();
 
   const generateContent = async (prompt: string, modelName?: string, forceReload: boolean = false): Promise<string> => {
     const cacheKey = `generateContent-${prompt}-${modelName}`;
@@ -17,7 +17,7 @@ export function useCachedLlm() {
     }
 
     const response = await originalGenerateContent(prompt, modelName);
-    setCache(cacheKey, response);
+    updateCache(cacheKey, response);
     return response;
   };
 
@@ -32,7 +32,7 @@ export function useCachedLlm() {
     }
 
     const response = await originalStartChat(history, newMessage, modelName, demandDescription);
-    setCache(cacheKey, response);
+    updateCache(cacheKey, response);
     return response;
   };
 

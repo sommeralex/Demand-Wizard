@@ -24,7 +24,7 @@ export default function RootLayout({
           <WizardProvider>
             <div className="flex flex-col h-screen">
               <header className="bg-gray-800 text-white p-4 text-center text-2xl font-bold">
-                APG Demand Wizard
+                AI Based Demand Wizard
               </header>
               <Stepper />
               <main className="flex-grow overflow-y-auto">
