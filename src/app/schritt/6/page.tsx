@@ -84,29 +84,95 @@ const BreakEvenChart: React.FC<{ businessCaseData: BusinessCaseData | null }> = 
   const kumulativeData = businessCaseData.cashflow.map(cf => cf.kumulativ);
   const nettoData = businessCaseData.cashflow.map(cf => cf.netto_cashflow);
 
+  // Create zero line for Break-Even visualization
+  const zeroLine = new Array(labels.length).fill(0);
+
+  // Find Break-Even point (where cumulative cashflow crosses zero)
+  let breakEvenIndex = -1;
+  for (let i = 0; i < kumulativeData.length; i++) {
+    if (kumulativeData[i] >= 0) {
+      breakEvenIndex = i;
+      break;
+    }
+  }
+
+  // Create a dataset for the Break-Even marker point
+  const breakEvenMarker = new Array(labels.length).fill(null);
+  if (breakEvenIndex >= 0) {
+    breakEvenMarker[breakEvenIndex] = 0; // Place marker at 0 on the break-even year
+  }
+
+  // Create separate datasets for loss zone (negative) and profit zone (positive)
+  // To avoid gaps, we need to include the transition point in both datasets
+  const lossZoneData = kumulativeData.map((value: number, index: number) => {
+    // Include this point if it's negative OR if it's the first positive point after negatives
+    if (value < 0) return value;
+    if (value >= 0 && index > 0 && kumulativeData[index - 1] < 0) return value; // Transition point
+    return null;
+  });
+
+  const profitZoneData = kumulativeData.map((value: number, index: number) => {
+    // Include this point if it's positive OR if it's the last negative point before positives
+    if (value >= 0) return value;
+    if (value < 0 && index < kumulativeData.length - 1 && kumulativeData[index + 1] >= 0) return value; // Transition point
+    return null;
+  });
+
   const data = {
     labels,
     datasets: [
       {
-        label: 'Kumulativer Cashflow',
-        data: kumulativeData,
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        label: '📉 Verlustzone (Kumulativer Cashflow)',
+        data: lossZoneData,
+        borderColor: 'rgb(239, 68, 68)', // Red
+        backgroundColor: 'rgba(239, 68, 68, 0.15)', // Red fill for loss zone
         fill: true,
         tension: 0.3,
         pointRadius: 6,
         pointHoverRadius: 8,
+        pointBackgroundColor: 'rgb(239, 68, 68)',
       },
       {
-        label: 'Netto Cashflow pro Jahr',
+        label: '📈 Gewinnzone (Kumulativer Cashflow)',
+        data: profitZoneData,
+        borderColor: 'rgb(34, 197, 94)', // Green
+        backgroundColor: 'rgba(34, 197, 94, 0.15)', // Green fill for profit zone
+        fill: true,
+        tension: 0.3,
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        pointBackgroundColor: 'rgb(34, 197, 94)',
+      },
+      {
+        label: 'Netto Cashflow pro Jahr (Nutzen - OPEX)',
         data: nettoData,
-        borderColor: 'rgb(16, 185, 129)',
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        borderColor: 'rgb(59, 130, 246)', // Blue
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
         fill: false,
         tension: 0.3,
         pointRadius: 5,
         pointHoverRadius: 7,
         borderDash: [5, 5]
+      },
+      {
+        label: 'Break-Even Linie (0 EUR)',
+        data: zeroLine,
+        borderColor: 'rgb(55, 65, 81)', // Darker gray (gray-700) for better visibility
+        borderWidth: 3,
+        borderDash: [8, 4],
+        pointRadius: 0,
+        fill: false,
+        tension: 0,
+      },
+      {
+        label: '🎯 Break-Even Punkt',
+        data: breakEvenMarker,
+        borderColor: 'rgb(239, 68, 68)', // Red
+        backgroundColor: 'rgb(239, 68, 68)',
+        pointRadius: 12,
+        pointHoverRadius: 15,
+        pointStyle: 'circle',
+        showLine: false, // Don't draw a line, just the point
       }
     ],
   };
@@ -137,6 +203,13 @@ const BreakEvenChart: React.FC<{ businessCaseData: BusinessCaseData | null }> = 
               label += new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(context.parsed.y);
             }
             return label;
+          },
+          afterLabel: function(context: any) {
+            // Add Break-Even marker only for the red break-even point dataset (now at index 4)
+            if (context.datasetIndex === 4 && context.dataIndex === breakEvenIndex) {
+              return '🎯 BREAK-EVEN ERREICHT!';
+            }
+            return '';
           }
         }
       }
@@ -149,7 +222,20 @@ const BreakEvenChart: React.FC<{ businessCaseData: BusinessCaseData | null }> = 
           }
         },
         grid: {
-          color: 'rgba(0, 0, 0, 0.05)'
+          color: function(context: any) {
+            // Make the 0-line more visible
+            if (context.tick.value === 0) {
+              return 'rgb(55, 65, 81)'; // Dark gray for 0-line
+            }
+            return 'rgba(0, 0, 0, 0.05)'; // Light gray for other lines
+          },
+          lineWidth: function(context: any) {
+            // Make the 0-line thicker
+            if (context.tick.value === 0) {
+              return 2;
+            }
+            return 1;
+          }
         }
       },
       x: {
@@ -168,6 +254,17 @@ const BreakEvenChart: React.FC<{ businessCaseData: BusinessCaseData | null }> = 
     <div className="space-y-6">
       <div className="h-[400px]">
         <Line data={data} options={options} />
+      </div>
+
+      {/* Chart Explanation */}
+      <div className="p-3 bg-blue-50 border-l-4 border-blue-500 text-sm">
+        <p className="font-semibold text-blue-900 mb-1">💡 Chart-Erklärung:</p>
+        <p className="text-blue-800">
+          <span className="font-semibold">Break-Even</span> ist erreicht, wenn der kumulativer Cashflow die <span className="text-gray-600 font-semibold">graue 0-EUR-Linie</span> kreuzt {breakEvenIndex >= 0 && `(🎯 roter Punkt in Jahr ${businessCaseData.cashflow[breakEvenIndex].jahr})`}.
+          Die <span className="text-red-600 font-semibold">📉 rote Fläche</span> zeigt die <strong>Verlustzone</strong> (negative Cashflow),
+          die <span className="text-green-600 font-semibold">📈 grüne Fläche</span> zeigt die <strong>Gewinnzone</strong> (positive Cashflow).
+          Die <span className="text-blue-600 font-semibold">blaue gestrichelte Linie</span> zeigt den jährlichen Gewinn/Verlust.
+        </p>
       </div>
 
       {/* Nutzen Breakdown */}
@@ -493,8 +590,11 @@ const BusinessCaseAssumptions: React.FC<{
           </label>
           <input
             type="number"
-            value={jaehrlicheUmsatzsteigerung}
-            onChange={(e) => setJaehrlicheUmsatzsteigerung(parseInt(e.target.value) || 0)}
+            value={jaehrlicheUmsatzsteigerung === 0 ? '' : jaehrlicheUmsatzsteigerung}
+            onChange={(e) => {
+              const val = e.target.value;
+              setJaehrlicheUmsatzsteigerung(val === '' ? 0 : parseInt(val) || 0);
+            }}
             className="w-full p-2 border rounded-md"
             min="0"
             placeholder="z.B. 50000"
@@ -687,16 +787,9 @@ export default function StepPage() {
   const [isResizing, setIsResizing] = useState(false);
   const currentStep = 6;
 
-  // Business Case Assumptions State (lifted from child component)
-  const [assumptions, setAssumptions] = useState({
-    planungshorizont: 3,
-    mitarbeiterAnzahl: 3,
-    stundenProTag: 2,
-    reduktionProzent: 90,
-    stundensatz: 60,
-    arbeitstageProJahr: 220,
-    jaehrlicheUmsatzsteigerung: 0
-  });
+  // Use assumptions from WizardContext instead of local state
+  const assumptions = wizard.businessCaseAssumptions;
+  const setAssumptions = wizard.setBusinessCaseAssumptions;
 
   // Calculate totals from budget table
   const calculateBudgetTotals = () => {
@@ -755,6 +848,11 @@ export default function StepPage() {
 
   const handleBusinessCaseUpdate = (data: BusinessCaseData) => {
     wizard.setBusinessCaseData(data);
+  };
+
+  const forceReloadBusinessCase = () => {
+    // Clear business case data to force recalculation
+    wizard.setBusinessCaseData(null);
   };
 
   const handleMouseDown = () => {
@@ -855,10 +953,6 @@ export default function StepPage() {
           />
 
           <div className="border-t pt-6">
-            <h3 className="text-lg font-semibold mb-3">Business Case Assistent</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Der Assistent kann Ihnen helfen, die Annahmen zu validieren und aus Ihrer Demand-Beschreibung abzuleiten.
-            </p>
             <BusinessCaseChat
               demand={wizard.text}
               opexTotal={avgOpexPerYear}
@@ -885,6 +979,13 @@ export default function StepPage() {
             className="px-8 py-3 bg-red-500 text-white rounded-lg font-semibold"
           >
             Sitzungsdaten löschen
+          </button>
+          <button
+            onClick={forceReloadBusinessCase}
+            disabled={isLoading}
+            className="px-8 py-3 bg-yellow-500 text-white rounded-lg disabled:opacity-50 font-semibold"
+          >
+            Force Reload
           </button>
           <button
             onClick={handleNext}

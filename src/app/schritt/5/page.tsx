@@ -723,6 +723,13 @@ export default function StepPage() {
             Sitzungsdaten löschen
           </button>
           <button
+            onClick={() => analyzeDemand(true)}
+            disabled={isAnalyzing}
+            className="px-8 py-3 bg-yellow-500 text-white rounded-lg disabled:opacity-50 font-semibold"
+          >
+            Force Reload
+          </button>
+          <button
             onClick={handleNext}
             disabled={isLoading}
             className="px-8 py-3 bg-blue-600 text-white rounded-lg disabled:opacity-50 font-semibold flex items-center"

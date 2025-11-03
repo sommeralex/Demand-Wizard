@@ -269,8 +269,21 @@ Für Expertenempfehlung:
 export const getBusinessCasePrompt = (
   demandDescription: string,
   opexTotal: number,
-  capexTotal: number
+  capexTotal: number,
+  currentAssumptions?: {
+    planungshorizont: number;
+    mitarbeiterAnzahl: number;
+    stundenProTag: number;
+    reduktionProzent: number;
+    stundensatz: number;
+    arbeitstageProJahr: number;
+    jaehrlicheUmsatzsteigerung: number;
+  }
 ) => {
+  const assumptionsContext = currentAssumptions
+    ? `\n\nAktuelle Annahmen (bereits im Formular eingegeben):\n- Planungshorizont: ${currentAssumptions.planungshorizont} Jahre\n- Betroffene Mitarbeiter: ${currentAssumptions.mitarbeiterAnzahl}\n- Zeitaufwand pro Mitarbeiter: ${currentAssumptions.stundenProTag} Std/Tag\n- Erwartete Reduktion: ${currentAssumptions.reduktionProzent}%\n- Stundensatz: ${currentAssumptions.stundensatz} EUR/Std\n- Arbeitstage pro Jahr: ${currentAssumptions.arbeitstageProJahr}\n- Jährliche Umsatzsteigerung: ${currentAssumptions.jaehrlicheUmsatzsteigerung.toLocaleString('de-DE')} EUR`
+    : '';
+
   return `
     ${BUSINESS_CASE_ASSISTANT_INSTRUCTIONS}
 
@@ -282,8 +295,13 @@ export const getBusinessCasePrompt = (
     Budget (aus Schritt 5):
     - CAPEX: ${capexTotal.toLocaleString('de-AT')} EUR
     - OPEX (jährlich): ${opexTotal.toLocaleString('de-AT')} EUR
+    ${assumptionsContext}
 
-    **WICHTIG:** Stelle EINE kurze, präzise Frage zum erwarteten Nutzen (z.B. Zeitersparnis in Stunden pro Woche). Antworte im JSON-Format mit "frage".
+    **WICHTIG:**
+    ${currentAssumptions
+      ? '- Die "Aktuellen Annahmen" sind bereits im Formular eingegeben\n    - Du musst NICHT nach diesen Werten fragen\n    - Erstelle direkt eine vollständige Business Case Analyse mit den vorhandenen Werten\n    - Antworte im JSON-Format mit der vollständigen Berechnung'
+      : '- Stelle EINE kurze, präzise Frage zum erwarteten Nutzen (z.B. Zeitersparnis in Stunden pro Woche)\n    - Antworte im JSON-Format mit "frage"'
+    }
   `;
 };
 

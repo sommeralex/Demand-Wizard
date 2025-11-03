@@ -21,6 +21,16 @@ interface BusinessCaseData {
   optimierungen?: string[];
 }
 
+interface BusinessCaseAssumptions {
+  planungshorizont: number;
+  mitarbeiterAnzahl: number;
+  stundenProTag: number;
+  reduktionProzent: number;
+  stundensatz: number;
+  arbeitstageProJahr: number;
+  jaehrlicheUmsatzsteigerung: number;
+}
+
 interface WizardContextType {
   step: number;
   setStep: Dispatch<SetStateAction<number>>
@@ -46,6 +56,8 @@ interface WizardContextType {
   setBudgetPlanningHorizon: Dispatch<SetStateAction<number>>;
   businessCaseData: BusinessCaseData | null;
   setBusinessCaseData: Dispatch<SetStateAction<BusinessCaseData | null>>;
+  businessCaseAssumptions: BusinessCaseAssumptions;
+  setBusinessCaseAssumptions: Dispatch<SetStateAction<BusinessCaseAssumptions>>;
   reset: () => void;
 }
 
@@ -90,16 +102,27 @@ export const WizardProvider = ({ children }: { children: ReactNode }) => {
   const [budgetStartYear, setBudgetStartYear] = useState<number>(initialState.budgetStartYear || new Date().getFullYear());
   const [budgetPlanningHorizon, setBudgetPlanningHorizon] = useState<number>(initialState.budgetPlanningHorizon || 3);
   const [businessCaseData, setBusinessCaseData] = useState<BusinessCaseData | null>(initialState.businessCaseData || null);
+  const [businessCaseAssumptions, setBusinessCaseAssumptions] = useState<BusinessCaseAssumptions>(
+    initialState.businessCaseAssumptions || {
+      planungshorizont: 3,
+      mitarbeiterAnzahl: 3,
+      stundenProTag: 2,
+      reduktionProzent: 90,
+      stundensatz: 60,
+      arbeitstageProJahr: 220,
+      jaehrlicheUmsatzsteigerung: 0
+    }
+  );
 
   // Effect to save state to localStorage whenever any relevant state changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const stateToSave = {
-        step, text, rating, classification, similarProjects, recommendation, proposal, checklistItems, budgetTable, budgetStartYear, budgetPlanningHorizon, businessCaseData
+        step, text, rating, classification, similarProjects, recommendation, proposal, checklistItems, budgetTable, budgetStartYear, budgetPlanningHorizon, businessCaseData, businessCaseAssumptions
       };
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));
     }
-  }, [step, text, rating, classification, similarProjects, recommendation, proposal, checklistItems, budgetTable, budgetStartYear, budgetPlanningHorizon, businessCaseData]);
+  }, [step, text, rating, classification, similarProjects, recommendation, proposal, checklistItems, budgetTable, budgetStartYear, budgetPlanningHorizon, businessCaseData, businessCaseAssumptions]);
 
 
   const reset = () => {
@@ -119,6 +142,15 @@ export const WizardProvider = ({ children }: { children: ReactNode }) => {
     setBudgetStartYear(new Date().getFullYear());
     setBudgetPlanningHorizon(3);
     setBusinessCaseData(null);
+    setBusinessCaseAssumptions({
+      planungshorizont: 3,
+      mitarbeiterAnzahl: 3,
+      stundenProTag: 2,
+      reduktionProzent: 90,
+      stundensatz: 60,
+      arbeitstageProJahr: 220,
+      jaehrlicheUmsatzsteigerung: 0
+    });
     if (typeof window !== 'undefined') {
       localStorage.removeItem(LOCAL_STORAGE_KEY);
     }
@@ -138,6 +170,7 @@ export const WizardProvider = ({ children }: { children: ReactNode }) => {
       budgetStartYear, setBudgetStartYear,
       budgetPlanningHorizon, setBudgetPlanningHorizon,
       businessCaseData, setBusinessCaseData,
+      businessCaseAssumptions, setBusinessCaseAssumptions,
       reset
     }}>
       {children}

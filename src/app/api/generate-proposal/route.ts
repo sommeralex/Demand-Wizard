@@ -4,14 +4,19 @@ import { generateContent } from "../../../lib/llm";
 
 export async function POST(req: NextRequest) {
   try {
-    const { demandText, classification, recommendation } = await req.json();
+    const { demandText, classification, recommendation, forceReload } = await req.json();
     if (!demandText || !classification || !recommendation) {
       return NextResponse.json({ error: "Missing required data" }, { status: 400 });
     }
 
     const prompt = getGenerateProposalPrompt(demandText, classification, recommendation);
 
-    const markdown = await generateContent(prompt, process.env.GEMINI_MODEL || "gemini-1.0-pro");
+    // Use cache by default, only reload if explicitly requested
+    const markdown = await generateContent(
+      prompt,
+      process.env.GEMINI_MODEL || "gemini-1.0-pro",
+      forceReload || false
+    );
 
     return NextResponse.json({ markdown });
 

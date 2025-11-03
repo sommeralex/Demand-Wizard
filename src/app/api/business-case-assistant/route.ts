@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     if (isInitialCalculation) {
       // Use generateContent for initial break-even calculation (single-shot)
-      const prompt = getBusinessCasePrompt(demandDescription, opexTotal, capexTotal);
+      const prompt = getBusinessCasePrompt(demandDescription, opexTotal, capexTotal, currentAssumptions);
       console.log("Using generateContent for initial business case calculation");
       botResponseRaw = await generateContent(prompt, process.env.GEMINI_MODEL || "gemini-1.0-pro", forceReload);
     } else {
