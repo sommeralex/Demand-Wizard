@@ -166,7 +166,6 @@ const BreakEvenChart: React.FC<{
         borderColor: 'rgb(59, 130, 246)', // Blue line
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         borderWidth: 3,
-        pointRadius: 6,
         pointHoverRadius: 8,
         pointBackgroundColor: kumulativeData.map((value: number, index: number) =>
           index === breakEvenIndex ? 'rgb(239, 68, 68)' : 'rgb(59, 130, 246)'
