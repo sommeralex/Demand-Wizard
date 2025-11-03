@@ -73,7 +73,7 @@ export async function startChat(history: any[], newMessage: string, modelName: s
     }
     try {
       // Claude's API expects messages in a specific format
-      const claudeMessages = history.map(msg => ({
+      const claudeMessages: { role: "user" | "assistant"; content: string; }[] = history.map(msg => ({
         role: msg.role === "user" ? "user" : "assistant",
         content: msg.parts[0].text,
       }));

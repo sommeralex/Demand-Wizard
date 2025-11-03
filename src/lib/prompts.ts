@@ -1,4 +1,4 @@
-'''// This file centralizes all prompts used in the application.
+
 
 export const getAnalyzePrompt = (text: string) => `
   Analyze the following demand description from a user.
@@ -149,4 +149,3 @@ Du bist ein KI-Assistent für die Klassifizierung von Unternehmensausgaben in ö
 3. **Dialogprotokoll:** Wenn unklar, stelle IMMER nur EINE klärende Frage auf einmal.
 4. **Eskalation:** Bei komplexen Fällen (z.B. gemischte Software) oder wenn der Nutzer unsicher ist, gib eine klare Empfehlung zur Konsultation eines Experten und erstelle eine Zusammenfassung.
 `;
-'''
