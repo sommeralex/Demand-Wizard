@@ -18,6 +18,7 @@ export default function StepPage() {
   const [forceReload, setForceReload] = useState(false);
   const [dynamicAnalysisEnabled, setDynamicAnalysisEnabled] = useState(false);
   const [pendingAnalysis, setPendingAnalysis] = useState(false); // Track if text changed during analysis
+  const [showInfoPopup, setShowInfoPopup] = useState(false);
   const currentStep = 1; // Hardcode currentStep for this page
 
   useEffect(() => {
@@ -93,6 +94,10 @@ export default function StepPage() {
   }, [currentStep, wizard]);
 
   const handleNext = async (reload: boolean = false) => {
+    if (!wizard.text.trim()) {
+      setShowInfoPopup(true);
+      return;
+    }
     setIsLoading(true);
     try {
       if (wizard.text === lastAnalyzedText && wizard.rating && !reload) {
@@ -178,7 +183,6 @@ export default function StepPage() {
         <div className="lg:col-span-3 border-t p-4 bg-white">
           <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
             <div className="flex flex-col sm:flex-row gap-2 order-2 sm:order-1">
-              <button onClick={() => router.back()} disabled={currentStep <= 1} className="px-6 py-2.5 bg-gray-200 text-gray-800 rounded-lg disabled:opacity-50 font-semibold text-sm w-full sm:w-auto">Zurück</button>
               <button onClick={() => { wizard.reset(); router.push('/schritt/1'); }} className="px-6 py-2.5 bg-red-500 text-white rounded-lg font-semibold text-sm w-full sm:w-auto">Sitzungsdaten löschen</button>
               <DeleteApiCacheButton />
 
@@ -216,8 +220,24 @@ export default function StepPage() {
                 </button>
               )}
             </div>
-            <div className="order-1 sm:order-2">
-              {currentStep < 6 ? <button onClick={() => handleNext()} disabled={!mounted || isLoading || (currentStep === 1 && !wizard.text)} className="px-8 py-3 bg-[#005A9C] text-white rounded hover:bg-[#004A7C] disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center justify-center w-full sm:w-auto transition-colors">{isLoading ? <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div> : null} Weiter</button> : <button onClick={() => { wizard.reset(); router.push('/schritt/1'); }} className="px-8 py-3 bg-[#005A9C] text-white rounded hover:bg-[#004A7C] font-semibold w-full sm:w-auto transition-colors">Neues Demand starten</button>}
+            <div className="order-1 sm:order-2 relative">
+              {currentStep < 6 ? <button onClick={() => handleNext()} disabled={!mounted || isLoading} className="px-8 py-3 bg-[#005A9C] text-white rounded hover:bg-[#004A7C] disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center justify-center w-full sm:w-auto transition-colors">{isLoading ? <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div> : null} Weiter</button> : <button onClick={() => { wizard.reset(); router.push('/schritt/1'); }} className="px-8 py-3 bg-[#005A9C] text-white rounded hover:bg-[#004A7C] font-semibold w-full sm:w-auto transition-colors">Neues Demand starten</button>}
+              {showInfoPopup && (
+                <div className="absolute bottom-full right-0 mb-2 w-max max-w-sm p-3 bg-red-100 border border-red-400 text-red-700 text-sm rounded-lg shadow-lg z-10"
+                  role="alert"
+                >
+                  <div className="flex items-center justify-between">
+                    <p>Bitte beschreiben Sie zuerst Ihre Idee, um fortzufahren.</p>
+                    <button
+                      onClick={() => setShowInfoPopup(false)}
+                      className="ml-4 -mr-1 p-1 text-red-500 hover:text-red-700 rounded-md focus:outline-none focus:ring-2 focus:ring-red-400"
+                      aria-label="Schließen"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path></svg>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

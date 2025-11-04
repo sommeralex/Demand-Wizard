@@ -15,12 +15,19 @@ const steps = [
 ];
 
 export const Stepper = () => {
-  const { step: currentStep } = useWizard();
+  const { step: currentStep, text } = useWizard();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleStepClick = (e: React.MouseEvent, stepNumber: number) => {
+    if (stepNumber > 1 && !text) {
+      e.preventDefault();
+      alert('Bitte beschreiben Sie zuerst Ihre Idee in Schritt 1, bevor Sie fortfahren.');
+    }
+  };
 
   // Prevent hydration mismatch by not rendering dynamic content on server
   if (!mounted) {
@@ -50,15 +57,18 @@ export const Stepper = () => {
         {steps.map((step, index) => {
           const isCompleted = currentStep > step.number;
           const isCurrent = currentStep === step.number;
+          const isEnabled = text || step.number === 1;
 
           return (
             <li key={step.number} className="flex items-center">
-              <Link href={`/schritt/${step.number}`} className="flex flex-col items-center text-center">
+              <Link href={isEnabled ? `/schritt/${step.number}` : '#'}
+                onClick={(e) => handleStepClick(e, step.number)}
+                className={`flex flex-col items-center text-center ${!isEnabled ? 'cursor-not-allowed' : ''}`}>
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm ${isCompleted ? 'bg-green-600' : isCurrent ? 'bg-slate-600' : 'bg-gray-400'}`}>
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm ${!isEnabled ? 'bg-gray-300' : isCompleted ? 'bg-green-600' : isCurrent ? 'bg-slate-600' : 'bg-gray-400'}`}>
                   {step.number}
                 </div>
-                <span className={`mt-1 text-xs font-semibold md:block whitespace-nowrap ${isCurrent ? 'text-slate-600' : 'text-gray-600'}`}>
+                <span className={`mt-1 text-xs font-semibold md:block whitespace-nowrap ${!isEnabled ? 'text-gray-400' : isCurrent ? 'text-slate-600' : 'text-gray-600'}`}>
                   {step.title}
                 </span>
               </Link>
