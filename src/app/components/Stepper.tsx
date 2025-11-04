@@ -25,19 +25,19 @@ export const Stepper = () => {
   // Prevent hydration mismatch by not rendering dynamic content on server
   if (!mounted) {
     return (
-      <nav className="p-4 border-b bg-gray-50 h-20">
-        <ol className="flex items-center justify-center space-x-4">
+      <nav className="p-2 md:p-4 border-b bg-gray-50">
+        <ol className="flex items-center justify-start md:justify-center space-x-2 md:space-x-4 overflow-x-auto">
           {steps.map((step) => (
-            <li key={step.number} className="flex items-center">
-              <Link href={`/schritt/${step.number}`} className={`flex flex-col items-center text-center`}>
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white bg-gray-400">
+            <li key={step.number} className="flex items-center flex-shrink-0">
+              <Link href={`/schritt/${step.number}`} className="flex flex-col items-center text-center">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white bg-gray-400 text-sm">
                   {step.number}
                 </div>
-                <span className="mt-2 text-xs font-semibold text-gray-600">
+                <span className="mt-1 text-xs font-semibold text-gray-600 hidden md:block whitespace-nowrap">
                   {step.title}
                 </span>
               </Link>
-              {step.number < steps.length && <div className="w-12 h-px bg-gray-300 mx-4" />}
+              {step.number < steps.length && <div className="w-8 md:w-12 h-px bg-gray-300 mx-2 md:mx-4 flex-shrink-0" />}
             </li>
           ))}
         </ol>
@@ -46,24 +46,24 @@ export const Stepper = () => {
   }
 
   return (
-    <nav className="p-4 border-b bg-gray-50 h-20">
-      <ol className="flex items-center justify-center space-x-4">
+    <nav className="p-2 md:p-4 border-b bg-gray-50">
+      <ol className="flex items-center justify-start md:justify-center space-x-2 md:space-x-4 overflow-x-auto">
         {steps.map((step) => {
           const isCompleted = currentStep > step.number;
           const isCurrent = currentStep === step.number;
 
           return (
-            <li key={step.number} className="flex items-center">
-              <Link href={`/schritt/${step.number}`} className={`flex flex-col items-center text-center`}>
+            <li key={step.number} className="flex items-center flex-shrink-0">
+              <Link href={`/schritt/${step.number}`} className="flex flex-col items-center text-center">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-white ${isCompleted ? 'bg-green-600' : isCurrent ? 'bg-blue-600' : 'bg-gray-400'}`}>
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm ${isCompleted ? 'bg-green-600' : isCurrent ? 'bg-blue-600' : 'bg-gray-400'}`}>
                   {step.number}
                 </div>
-                <span className={`mt-2 text-xs font-semibold ${isCurrent ? 'text-blue-600' : 'text-gray-600'}`}>
+                <span className={`mt-1 text-xs font-semibold hidden md:block whitespace-nowrap ${isCurrent ? 'text-blue-600' : 'text-gray-600'}`}>
                   {step.title}
                 </span>
               </Link>
-              {step.number < steps.length && <div className="w-12 h-px bg-gray-300 mx-4" />}
+              {step.number < steps.length && <div className="w-8 md:w-12 h-px bg-gray-300 mx-2 md:mx-4 flex-shrink-0" />}
             </li>
           );
         })}

@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect, Dispatch, SetStateAction } from 'react'; // Added useEffect
 
 // --- TYPE DEFINITIONS ---
-interface Rating { bewertung: { klarheit: number; vollstaendigkeit: number; business_value: number; }; feedback_text: string; }
+interface Rating { bewertung: { klarheit: number; vollstaendigkeit: number; business_value: number; }; projekt_typ?: string; feedback_text: string; }
 interface ClassificationResult { [key: string]: { score: string; begruendung: string }; }
 interface SimilarProject { id: string; title: string; status: string; similarity: number; }
 interface Recommendation { empfehlung_aktion: string; target_id: string | null; zusammenfassung_benutzer: string; }
@@ -96,6 +96,10 @@ export const WizardProvider = ({ children }: { children: ReactNode }) => {
       { id: "problem_statement", text: "Problemstellung", checked: false },
       { id: "business_goal", text: "Business-Ziel", checked: false },
       { id: "user_group", text: "Betroffene Benutzergruppe", checked: false },
+      { id: "first_budget_indications", text: "Budget-Indikationen (OPEX/CAPEX)", checked: false },
+      { id: "first_internal_efforts_indications", text: "Interner Aufwand (Personentage)", checked: false },
+      { id: "first_timeplan_indications", text: "Nutzen-Indikationen (Zeit-/Geldeinsparungen)", checked: false },
+      { id: "rough_timeplan", text: "Zeitplan (Start/Ende)", checked: false },
     ]
   );
   const [budgetTable, setBudgetTable] = useState<BudgetTableRow[]>(initialState.budgetTable || []);
@@ -133,10 +137,14 @@ export const WizardProvider = ({ children }: { children: ReactNode }) => {
     setSimilarProjects([]);
     setRecommendation(null);
     setProposal(null);
-    setChecklistItems([ // Reset checklist items to initial state
+    setChecklistItems([ // Reset checklist items to initial state - synchronized with analyze.ts
       { id: "problem_statement", text: "Problemstellung", checked: false },
       { id: "business_goal", text: "Business-Ziel", checked: false },
       { id: "user_group", text: "Betroffene Benutzergruppe", checked: false },
+      { id: "first_budget_indications", text: "Budget-Indikationen (OPEX/CAPEX)", checked: false },
+      { id: "first_internal_efforts_indications", text: "Interner Aufwand (Personentage)", checked: false },
+      { id: "first_timeplan_indications", text: "Nutzen-Indikationen (Zeit-/Geldeinsparungen)", checked: false },
+      { id: "rough_timeplan", text: "Zeitplan (Start/Ende)", checked: false },
     ]);
     setBudgetTable([]);
     setBudgetStartYear(new Date().getFullYear());

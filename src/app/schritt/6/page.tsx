@@ -931,10 +931,10 @@ export default function StepPage() {
   }, [isResizing]);
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex flex-grow overflow-hidden relative">
+    <div className="flex flex-col min-h-screen lg:h-full">
+      <div className="flex flex-col lg:flex-row lg:flex-grow lg:overflow-hidden relative">
         {/* Left side - Demand Text and Break-Even Chart */}
-        <div className="p-8 overflow-y-auto bg-white" style={{ width: `${100 - sidebarWidth}%` }}>
+        <div className="p-4 md:p-8 lg:overflow-y-auto bg-white lg:w-auto" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1024 ? `${100 - sidebarWidth}%` : '100%' }}>
           <h2 className="text-2xl font-semibold mb-6">Schritt 6: Business Case</h2>
 
           {/* Editable Demand Text */}
@@ -978,15 +978,15 @@ export default function StepPage() {
           )}
         </div>
 
-        {/* Resize Handle */}
+        {/* Resize Handle - Hidden on mobile */}
         <div
-          className="w-1 bg-gray-300 hover:bg-blue-500 cursor-col-resize transition-colors"
+          className="hidden lg:block w-1 bg-gray-300 hover:bg-blue-500 cursor-col-resize transition-colors"
           onMouseDown={handleMouseDown}
           style={{ cursor: isResizing ? 'col-resize' : 'ew-resize' }}
         />
 
         {/* Right side - Business Case Assumptions + Assistant */}
-        <aside className="p-8 bg-gray-100 overflow-y-auto space-y-6" style={{ width: `${sidebarWidth}%` }}>
+        <aside className="hidden lg:block p-4 md:p-8 bg-gray-100 lg:overflow-y-auto space-y-6 lg:w-auto" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1024 ? `${sidebarWidth}%` : '100%' }}>
           <BusinessCaseAssumptions
             opexTotal={avgOpexPerYear}
             capexTotal={capexSum}
@@ -1010,35 +1010,39 @@ export default function StepPage() {
       </div>
 
       {/* Bottom navigation */}
-      <div className="border-t p-4 flex justify-between items-center bg-white">
-          <button
-            onClick={() => router.back()}
-            disabled={currentStep <= 1}
-            className="px-8 py-3 bg-gray-200 text-gray-800 rounded-lg disabled:opacity-50 font-semibold"
-          >
-            Zurück
-          </button>
-          <button
-            onClick={() => { wizard.reset(); router.push('/schritt/1'); }}
-            className="px-8 py-3 bg-red-500 text-white rounded-lg font-semibold"
-          >
-            Sitzungsdaten löschen
-          </button>
-          <button
-            onClick={forceReloadBusinessCase}
-            disabled={isLoading}
-            className="px-8 py-3 bg-yellow-500 text-white rounded-lg disabled:opacity-50 font-semibold"
-          >
-            Force Reload
-          </button>
+      <div className="border-t p-4 bg-white">
+        <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
+          <div className="flex flex-col sm:flex-row gap-2 order-2 sm:order-1">
+            <button
+              onClick={() => router.back()}
+              disabled={currentStep <= 1}
+              className="px-6 py-2.5 text-sm bg-gray-200 text-gray-800 rounded-lg disabled:opacity-50 font-semibold w-full sm:w-auto"
+            >
+              Zurück
+            </button>
+            <button
+              onClick={() => { wizard.reset(); router.push('/schritt/1'); }}
+              className="px-6 py-2.5 text-sm bg-red-500 text-white rounded-lg font-semibold w-full sm:w-auto"
+            >
+              Sitzungsdaten löschen
+            </button>
+            <button
+              onClick={forceReloadBusinessCase}
+              disabled={isLoading}
+              className="px-6 py-2.5 text-sm bg-yellow-500 text-white rounded-lg disabled:opacity-50 font-semibold w-full sm:w-auto"
+            >
+              Force Reload
+            </button>
+          </div>
           <button
             onClick={handleNext}
             disabled={isLoading}
-            className="px-8 py-3 bg-blue-600 text-white rounded-lg disabled:opacity-50 font-semibold flex items-center"
+            className="px-8 py-3 bg-blue-600 text-white rounded-lg disabled:opacity-50 font-semibold flex justify-center items-center w-full sm:w-auto order-1 sm:order-2"
           >
             {isLoading ? <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div> : null}
             Weiter
           </button>
+        </div>
       </div>
     </div>
   );
