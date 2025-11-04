@@ -123,7 +123,8 @@ export default function StepPage() {
           <ExplanationBox
             key={hint.id}
             title={hint.title}
-            content={hint.content}
+            description={hint.description}
+            example={hint.example}
             isOpen={index === 0} // Open the first item by default
           />
         ))}
