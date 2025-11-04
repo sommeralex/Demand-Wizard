@@ -87,29 +87,39 @@ const BreakEvenChart: React.FC<{
     );
   }
 
-  const labels = businessCaseData.cashflow.map(cf => `Jahr ${cf.jahr}`);
+  // Get calendar years from yearlyTotals
+  const calendarYears = Object.keys(yearlyTotals).map(Number).sort((a, b) => a - b);
+  const startYear = calendarYears.length > 0 ? calendarYears[0] : new Date().getFullYear();
+
+  // Map relative years to calendar years for labels
+  // Jahr 0 = startYear (Investition), Jahr 1 = startYear+1, Jahr 2 = startYear+2, etc.
+  const labels = businessCaseData.cashflow.map(cf => {
+    const calendarYear = startYear + cf.jahr;
+    if (cf.jahr === 0) return `${calendarYear} (Investition)`;
+    return `${calendarYear}`;
+  });
 
   console.log('BreakEvenChart - yearlyTotals:', yearlyTotals);
   console.log('BreakEvenChart - cashflow:', businessCaseData.cashflow);
+  console.log('BreakEvenChart - startYear:', startYear);
 
   // Extract CAPEX, OPEX, and Nutzen for each year
   const capexData = businessCaseData.cashflow.map(cf => {
-    if (cf.jahr === 0) return -businessCaseData.investition!.capex;
-    return 0;
+    // Convert relative year to calendar year: Jahr 0 = startYear, Jahr 1 = startYear+1, etc.
+    const calendarYear = startYear + cf.jahr;
+    // Use yearlyTotals to get actual CAPEX per year from budget table
+    const capex = yearlyTotals[calendarYear]?.capex || 0;
+    console.log(`CAPEX - Relatives Jahr ${cf.jahr} -> Kalenderjahr ${calendarYear}: ${capex}`);
+    return capex > 0 ? -capex : 0;
   });
 
   const opexData = businessCaseData.cashflow.map(cf => {
-    if (cf.jahr === 0) return 0;
-    // Extract OPEX from description - handle numbers with spaces/dots/commas
-    const match = cf.beschreibung.match(/OPEX\s+([\d\s.,]+)\s*EUR/);
-    if (match) {
-      // Remove all non-digit characters except dots and commas
-      const cleanedNumber = match[1].replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '.');
-      const opexValue = parseFloat(cleanedNumber);
-      console.log(`Jahr ${cf.jahr}: Extracted OPEX = ${opexValue} from "${match[0]}"`);
-      return opexValue > 0 ? -opexValue : 0;
-    }
-    return 0;
+    // Convert relative year to calendar year: Jahr 0 = startYear, Jahr 1 = startYear+1, etc.
+    const calendarYear = startYear + cf.jahr;
+    // Use yearlyTotals to get actual OPEX per year from budget table
+    const opex = yearlyTotals[calendarYear]?.opex || 0;
+    console.log(`OPEX - Relatives Jahr ${cf.jahr} -> Kalenderjahr ${calendarYear}: ${opex}`);
+    return opex > 0 ? -opex : 0;
   });
 
   console.log('BreakEvenChart - opexData:', opexData);
@@ -143,6 +153,7 @@ const BreakEvenChart: React.FC<{
         backgroundColor: 'rgb(239, 68, 68)', // Red for costs
         borderColor: 'rgb(239, 68, 68)',
         borderWidth: 1,
+        stack: 'kosten', // Stack CAPEX with OPEX
         order: 2,
       },
       {
@@ -152,6 +163,7 @@ const BreakEvenChart: React.FC<{
         backgroundColor: 'rgb(251, 146, 60)', // Orange for OPEX
         borderColor: 'rgb(251, 146, 60)',
         borderWidth: 1,
+        stack: 'kosten', // Stack OPEX with CAPEX
         order: 2,
       },
       {
@@ -161,6 +173,7 @@ const BreakEvenChart: React.FC<{
         backgroundColor: 'rgb(34, 197, 94)', // Green for benefits
         borderColor: 'rgb(34, 197, 94)',
         borderWidth: 1,
+        stack: 'nutzen', // Separate stack for benefits
         order: 2,
       },
       {
@@ -306,7 +319,9 @@ const BreakEvenChart: React.FC<{
         <div className="p-4 bg-gray-50 border-l-4 border-gray-500 rounded">
           <p className="text-sm text-gray-600">Break-Even Zeitpunkt</p>
           <p className="text-2xl font-bold text-gray-700">
-            {businessCaseData.kennzahlen?.break_even_monat} Monate
+            {businessCaseData.kennzahlen?.break_even_monat > 0
+              ? `${businessCaseData.kennzahlen.break_even_monat} Monate`
+              : 'Nicht erreicht'}
           </p>
         </div>
         <div className="p-4 bg-green-50 border-l-4 border-green-500 rounded">
@@ -488,7 +503,7 @@ const BusinessCaseAssumptions: React.FC<{
         netto_gewinn: nettoGewinn
       },
       empfehlung: nettoGewinn > 0
-        ? `Das Projekt ist wirtschaftlich attraktiv mit einem Break-Even nach ${breakEvenMonat} Monaten und einem ROI von ${roi}% über ${planungshorizont} Jahre.`
+        ? `Das Projekt ist wirtschaftlich attraktiv mit einem ${breakEvenMonat > 0 ? `Break-Even nach ${breakEvenMonat} Monaten` : 'Break-Even, der nicht innerhalb des Planungshorizonts erreicht wird,'} und einem ROI von ${roi}% über ${planungshorizont} Jahre.`
         : `Das Projekt ist wirtschaftlich nicht rentabel. Prüfen Sie Optimierungsmöglichkeiten oder erhöhen Sie den erwarteten Nutzen.`,
       risiken: [
         "Nutzen hängt stark von der tatsächlichen Zeitersparnis ab",
@@ -513,6 +528,14 @@ const BusinessCaseAssumptions: React.FC<{
   return (
     <div className="space-y-4 p-4 bg-white rounded-lg border">
       <h3 className="text-lg font-semibold mb-4">Annahmen für Business Case</h3>
+
+      <div className="p-3 bg-blue-50 border-l-4 border-blue-500 text-sm mb-4">
+        <p className="font-semibold text-blue-900">ℹ️ Wichtig: Zeitlicher Ablauf</p>
+        <p className="text-blue-800 mt-1">
+          Die Nutzenrealisierung (Einsparungen & Umsatzsteigerung) beginnt <strong>ein Jahr nach dem Investitionsjahr</strong>.
+          Beispiel: Investition in 2025 → Nutzen ab 2026.
+        </p>
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -714,7 +737,7 @@ const BusinessCaseChat: React.FC<{
         onBusinessCaseUpdate(data);
         setMessages(prev => [...prev, {
           role: 'model',
-          text: `Ihre Business Case Analyse wurde erstellt!\n\n**Break-Even:** ${data.kennzahlen.break_even_monat} Monate\n**ROI:** ${data.kennzahlen.roi_prozent}%\n\n${data.empfehlung || 'Die Analyse ist auf der linken Seite visualisiert.'}`
+          text: `Ihre Business Case Analyse wurde erstellt!\n\n**Break-Even:** ${data.kennzahlen.break_even_monat > 0 ? `${data.kennzahlen.break_even_monat} Monate` : 'Nicht erreicht'}\n**ROI:** ${data.kennzahlen.roi_prozent}%\n\n${data.empfehlung || 'Die Analyse ist auf der linken Seite visualisiert.'}`
         }]);
       } else if (data.experten_empfehlung) {
         setMessages(prev => [...prev, { role: 'model', text: data.experten_empfehlung }]);
@@ -828,14 +851,8 @@ export default function StepPage() {
       }
     });
 
-    // Convert calendar years to relative years (1, 2, 3, ...)
-    const sortedYears = Object.keys(yearlyTotalsByCalendarYear).map(Number).sort((a, b) => a - b);
-    const yearlyTotals: { [year: number]: { opex: number; capex: number } } = {};
-
-    sortedYears.forEach((calendarYear, index) => {
-      const relativeYear = index + 1; // Year 1, 2, 3, ...
-      yearlyTotals[relativeYear] = yearlyTotalsByCalendarYear[calendarYear];
-    });
+    // Keep calendar years as keys (don't convert to relative years)
+    const yearlyTotals = yearlyTotalsByCalendarYear;
 
     // Calculate overall totals
     const opexSum = wizard.budgetTable
