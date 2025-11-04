@@ -15,6 +15,8 @@ export default function StepPage() {
   const [lastAnalyzedText, setLastAnalyzedText] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [forceReload, setForceReload] = useState(false);
+  const [dynamicAnalysisEnabled, setDynamicAnalysisEnabled] = useState(false);
+  const [pendingAnalysis, setPendingAnalysis] = useState(false); // Track if text changed during analysis
   const currentStep = 1; // Hardcode currentStep for this page
 
   useEffect(() => {
@@ -33,12 +35,20 @@ export default function StepPage() {
     if (inputText.trim().length < 20) {
       wizard.setChecklistItems(items => items.map((item: ChecklistItem) => ({ ...item, checked: false })));
       setIsChecklistLoading(false);
+      setPendingAnalysis(false);
+      return;
+    }
+
+    // Don't start new analysis if one is already running
+    if (isChecklistLoading && !reload) {
+      setPendingAnalysis(true); // Mark that we need to run analysis again after current one finishes
       return;
     }
 
     // Reset checklist items when analysis starts
     wizard.setChecklistItems(items => items.map((item: ChecklistItem) => ({ ...item, checked: false })));
     setIsChecklistLoading(true);
+    setPendingAnalysis(false);
 
     try {
       const response = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: inputText, forceReload: reload }) });
@@ -47,21 +57,35 @@ export default function StepPage() {
       if (analysis.error) {
         alert(`Error analyzing text: ${analysis.details || analysis.error}`);
         setIsChecklistLoading(false);
+        setPendingAnalysis(false);
         return;
       }
       wizard.setChecklistItems(prevItems => prevItems.map((item: ChecklistItem) => ({ ...item, checked: !!analysis[item.id] })))
       setLastAnalyzedText(inputText); // Update lastAnalyzedText on successful analysis
-    } catch (error) { console.error("Failed to analyze text:", error); alert("Failed to analyze text. Please try again."); }
-    finally { setIsChecklistLoading(false); setForceReload(false); }
-  }, [wizard]);
+    } catch (error) {
+      console.error("Failed to analyze text:", error);
+      alert("Failed to analyze text. Please try again.");
+    }
+    finally {
+      setIsChecklistLoading(false);
+      setForceReload(false);
+
+      // If text changed during analysis, run again
+      if (pendingAnalysis && wizard.text !== inputText) {
+        setPendingAnalysis(false);
+        setTimeout(() => analyzeTextForChecklist(wizard.text, false), 100);
+      }
+    }
+  }, [wizard, isChecklistLoading, pendingAnalysis]);
 
   const debouncedAnalyzeText = useCallback(debounce(analyzeTextForChecklist, 1000), [debounce, analyzeTextForChecklist]);
 
   useEffect(() => {
-    if (wizard.text && wizard.text !== lastAnalyzedText) {
+    // Only run automatic analysis if dynamic analysis is enabled
+    if (dynamicAnalysisEnabled && wizard.text && wizard.text !== lastAnalyzedText) {
         debouncedAnalyzeText(wizard.text);
     }
-  }, [wizard.text, debouncedAnalyzeText, lastAnalyzedText]);
+  }, [wizard.text, debouncedAnalyzeText, lastAnalyzedText, dynamicAnalysisEnabled]);
 
   useEffect(() => {
     wizard.setStep(currentStep);
@@ -140,16 +164,40 @@ export default function StepPage() {
               <button onClick={() => router.back()} disabled={currentStep <= 1} className="px-6 py-2.5 bg-gray-200 text-gray-800 rounded-lg disabled:opacity-50 font-semibold text-sm w-full sm:w-auto">Zurück</button>
               <button onClick={() => { wizard.reset(); router.push('/schritt/1'); }} className="px-6 py-2.5 bg-red-500 text-white rounded-lg font-semibold text-sm w-full sm:w-auto">Sitzungsdaten löschen</button>
               <DeleteApiCacheButton />
+
+              {/* Toggle Dynamic Analysis */}
               <button
-                onClick={() => {
-                  setForceReload(true);
-                  wizard.setChecklistItems(items => items.map((item: ChecklistItem) => ({ ...item, checked: false })));
-                  analyzeTextForChecklist(wizard.text, true);
-                }}
-                className="px-6 py-2.5 bg-purple-500 text-white rounded-lg font-semibold text-sm w-full sm:w-auto"
+                onClick={() => setDynamicAnalysisEnabled(!dynamicAnalysisEnabled)}
+                className={`px-6 py-2.5 rounded-lg font-semibold text-sm w-full sm:w-auto ${
+                  dynamicAnalysisEnabled
+                    ? 'bg-green-500 text-white'
+                    : 'bg-gray-300 text-gray-700'
+                }`}
               >
-                Force Reload
+                {dynamicAnalysisEnabled ? '✓ Dynamische Analyse' : 'Dynamische Analyse'}
               </button>
+
+              {/* Manual Analysis Button (only visible when dynamic analysis is off) */}
+              {mounted && !dynamicAnalysisEnabled && (
+                <button
+                  onClick={() => {
+                    setForceReload(true);
+                    wizard.setChecklistItems(items => items.map((item: ChecklistItem) => ({ ...item, checked: false })));
+                    analyzeTextForChecklist(wizard.text, true);
+                  }}
+                  disabled={isChecklistLoading || !wizard.text}
+                  className="px-6 py-2.5 bg-purple-500 text-white rounded-lg disabled:opacity-50 font-semibold text-sm w-full sm:w-auto flex items-center justify-center"
+                >
+                  {isChecklistLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-t-2 border-white rounded-full animate-spin mr-2"></div>
+                      Analysiere...
+                    </>
+                  ) : (
+                    'Analyse starten'
+                  )}
+                </button>
+              )}
             </div>
             <div className="order-1 sm:order-2">
               {currentStep < 6 ? <button onClick={() => handleNext()} disabled={!mounted || isLoading || (currentStep === 1 && !wizard.text)} className="px-8 py-3 bg-blue-600 text-white rounded-lg disabled:opacity-50 font-semibold flex items-center justify-center w-full sm:w-auto">{isLoading ? <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div> : null} Weiter</button> : <button onClick={() => { wizard.reset(); router.push('/schritt/1'); }} className="px-8 py-3 bg-green-600 text-white rounded-lg font-semibold w-full sm:w-auto">Neues Demand starten</button>}
