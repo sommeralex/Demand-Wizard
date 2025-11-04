@@ -131,7 +131,7 @@ export default function StepPage() {
     if (isLoading || !wizard.recommendation) return <div className="text-center p-10">Lade Analyse...</div>;
     return (
       <>
-        <h2 className="text-2xl font-semibold mb-4">Schritt 4: Deine Abhängigkeits- & Duplikatsanalyse</h2>
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Schritt 4: Deine Abhängigkeits- & Duplikatsanalyse</h2>
         <div
           className={`p-4 border-l-4 rounded-r-lg ${
             wizard.recommendation.empfehlung_aktion === 'MERGE'
@@ -139,8 +139,8 @@ export default function StepPage() {
               : 'bg-green-50 border-green-500'
           }`}
         >
-          <h4 className="font-semibold">Unsere Empfehlung: {wizard.recommendation.empfehlung_aktion}</h4>
-          <p className="mt-2 text-sm">{wizard.recommendation.zusammenfassung_benutzer}</p>
+          <h4 className={`font-semibold ${wizard.recommendation.empfehlung_aktion === 'MERGE' ? 'text-red-800' : 'text-green-800'}`}>Unsere Empfehlung: {wizard.recommendation.empfehlung_aktion}</h4>
+          <p className={`mt-2 text-sm ${wizard.recommendation.empfehlung_aktion === 'MERGE' ? 'text-red-700' : 'text-green-700'}`}>{wizard.recommendation.zusammenfassung_benutzer}</p>
         </div>
       </>
     );
@@ -152,7 +152,12 @@ export default function StepPage() {
         <div className="lg:col-span-2 p-4 md:p-8 lg:overflow-y-auto">
             {renderStepContent()}
         </div>
-        <aside className="hidden lg:block lg:col-span-1 p-4 md:p-8 bg-gray-100 border-l lg:overflow-y-auto">
+        {/* Mobile: Show copilot content below main content */}
+        <div className="block lg:hidden p-4 md:p-8 bg-gray-50 border-t border-gray-200">
+            {renderCopilotContent()}
+        </div>
+        {/* Desktop: Show copilot content in sidebar */}
+        <aside className="hidden lg:block lg:col-span-1 p-4 md:p-8 bg-gray-50 border-l border-gray-200 lg:overflow-y-auto">
             {renderCopilotContent()}
         </aside>
         <div className="lg:col-span-3 border-t p-4 bg-white">

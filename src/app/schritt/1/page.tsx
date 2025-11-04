@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useWizard, type ChecklistItem } from '../../context/WizardContext';
 import { BAD_EXAMPLE_TEXT, MODERATE_EXAMPLE_TEXT, COMPLETE_EXAMPLE_TEXT } from '../../../data/examples';
 import { DeleteApiCacheButton } from '../../components/DeleteApiCacheButton';
-import { DEMAND_DESCRIPTION_HINT } from '../../../lib/ui_hints';
+import { DEMAND_DESCRIPTION_HINTS, DEMAND_DESCRIPTION_HINT_SHORT } from '../../../lib/ui_hints';
+import { ExplanationBox } from '../../components/ExplanationBox';
 
 export default function StepPage() {
   const router = useRouter();
@@ -116,15 +117,25 @@ export default function StepPage() {
 
   const renderStepContent = () => {
     if (isLoading && wizard.step !== currentStep) return <div className="text-center p-10">Lade nächsten Schritt...</div>;
-    return <div><textarea rows={20} className="w-full p-4 border rounded-md text-gray-700 placeholder:text-gray-400" value={wizard.text} onChange={(e) => wizard.setText(e.target.value)} placeholder={DEMAND_DESCRIPTION_HINT} /><div className="mt-4 flex flex-wrap gap-2"><button onClick={() => wizard.setText(BAD_EXAMPLE_TEXT)} className="px-4 py-2 bg-red-50 text-red-700 border border-red-300 rounded-md text-sm hover:bg-red-100">❌ Schlechtes Beispiel</button><button onClick={() => wizard.setText(MODERATE_EXAMPLE_TEXT)} className="px-4 py-2 bg-yellow-50 text-yellow-700 border border-yellow-300 rounded-md text-sm hover:bg-yellow-100">⚠️ Moderates Beispiel</button><button onClick={() => wizard.setText(COMPLETE_EXAMPLE_TEXT)} className="px-4 py-2 bg-green-50 text-green-700 border border-green-300 rounded-md text-sm hover:bg-green-100">✅ Vollständiges Beispiel</button></div></div>;
+    return <div><textarea rows={15} className="w-full p-4 border rounded-md text-gray-700 placeholder:text-gray-400" value={wizard.text} onChange={(e) => wizard.setText(e.target.value)} placeholder={DEMAND_DESCRIPTION_HINT_SHORT} /><div className="mt-4 flex flex-wrap gap-2"><button onClick={() => wizard.setText(BAD_EXAMPLE_TEXT)} className="px-4 py-2 bg-red-50 text-red-700 border border-red-300 rounded-md text-sm hover:bg-red-100">❌ Schlechtes Beispiel</button><button onClick={() => wizard.setText(MODERATE_EXAMPLE_TEXT)} className="px-4 py-2 bg-yellow-50 text-yellow-700 border border-yellow-300 rounded-md text-sm hover:bg-yellow-100">⚠️ Moderates Beispiel</button><button onClick={() => wizard.setText(COMPLETE_EXAMPLE_TEXT)} className="px-4 py-2 bg-green-50 text-green-700 border border-green-300 rounded-md text-sm hover:bg-green-100">✅ Vollständiges Beispiel</button></div><div className="mt-6">
+        <h3 className="text-md font-semibold text-gray-700 mb-3">Was gehört in eine gute Beschreibung?</h3>
+        {DEMAND_DESCRIPTION_HINTS.map((hint, index) => (
+          <ExplanationBox
+            key={hint.id}
+            title={hint.title}
+            content={hint.content}
+            isOpen={index === 0} // Open the first item by default
+          />
+        ))}
+      </div></div>;
   };
 
   const renderCopilotContent = () => {
     return (
       <div>
-        <h2 className="text-2xl font-semibold mb-4">Schritt 1: Beschreibe deine Idee</h2>
-        <h3 className="text-lg font-semibold mb-4">Deine Anforderungs-Checkliste</h3>
-        {isChecklistLoading && <p>Analysiere...</p>}
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Schritt 1: Beschreibe deine Idee</h2>
+        <h3 className="text-lg font-semibold mb-4 text-gray-800">Deine Anforderungs-Checkliste</h3>
+        {isChecklistLoading && <p className="text-gray-600">Analysiere...</p>}
         {mounted && (
           <ul className="space-y-3">
             {wizard.checklistItems.map((item) => (
@@ -140,7 +151,7 @@ export default function StepPage() {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span className="flex-1">{item.text}</span>
+                <span className="flex-1 text-gray-700">{item.text}</span>
               </li>
             ))}
           </ul>
@@ -155,7 +166,12 @@ export default function StepPage() {
         <div className="lg:col-span-2 p-4 md:p-8 lg:overflow-y-auto">
             {renderStepContent()}
         </div>
-        <aside className="hidden lg:block lg:col-span-1 p-4 md:p-8 bg-gray-100 border-l lg:overflow-y-auto">
+        {/* Mobile: Show copilot content below main content */}
+        <div className="block lg:hidden p-4 md:p-8 bg-gray-50 border-t border-gray-200">
+            {renderCopilotContent()}
+        </div>
+        {/* Desktop: Show copilot content in sidebar */}
+        <aside className="hidden lg:block lg:col-span-1 p-4 md:p-8 bg-gray-50 border-l border-gray-200 lg:overflow-y-auto">
             {renderCopilotContent()}
         </aside>
         <div className="lg:col-span-3 border-t p-4 bg-white">
@@ -200,7 +216,7 @@ export default function StepPage() {
               )}
             </div>
             <div className="order-1 sm:order-2">
-              {currentStep < 6 ? <button onClick={() => handleNext()} disabled={!mounted || isLoading || (currentStep === 1 && !wizard.text)} className="px-8 py-3 bg-blue-600 text-white rounded-lg disabled:opacity-50 font-semibold flex items-center justify-center w-full sm:w-auto">{isLoading ? <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div> : null} Weiter</button> : <button onClick={() => { wizard.reset(); router.push('/schritt/1'); }} className="px-8 py-3 bg-green-600 text-white rounded-lg font-semibold w-full sm:w-auto">Neues Demand starten</button>}
+              {currentStep < 6 ? <button onClick={() => handleNext()} disabled={!mounted || isLoading || (currentStep === 1 && !wizard.text)} className="px-8 py-3 bg-[#005A9C] text-white rounded hover:bg-[#004A7C] disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center justify-center w-full sm:w-auto transition-colors">{isLoading ? <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div> : null} Weiter</button> : <button onClick={() => { wizard.reset(); router.push('/schritt/1'); }} className="px-8 py-3 bg-[#005A9C] text-white rounded hover:bg-[#004A7C] font-semibold w-full sm:w-auto transition-colors">Neues Demand starten</button>}
             </div>
           </div>
         </div>

@@ -46,7 +46,7 @@ export default function StepPage() {
           Für "{wizard.rating?.projekt_typ}" wird kein formeller Projektantrag benötigt.
         </p>
         <p className="text-sm text-gray-500 max-w-lg mx-auto">
-          Sie können direkt mit der Umsetzung beginnen. Die bisherige Analyse (Bewertung, Klassifizierung, Budget)
+          Du kannst direkt mit der Umsetzung beginnen. Die bisherige Analyse (Bewertung, Klassifizierung, Budget)
           ist ausreichend für die interne Dokumentation.
         </p>
       </div>;
@@ -60,10 +60,10 @@ export default function StepPage() {
     if (!projektTypIstProjekt) {
       return (
         <>
-          <h2 className="text-2xl font-semibold mb-4">Schritt 7: Abschluss</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-gray-800">Schritt 7: Abschluss</h2>
           <div className="p-4 bg-blue-50 border-l-4 border-blue-500">
-            <h4 className="font-semibold">Zusammenfassung</h4>
-            <p className="mt-2 text-sm">
+            <h4 className="font-semibold text-blue-800">Zusammenfassung</h4>
+            <p className="mt-2 text-sm text-blue-700">
               Deine Analyse ist vollständig. Alle wichtigen Informationen aus den vorherigen Schritten stehen dir zur Verfügung.
             </p>
           </div>
@@ -74,10 +74,10 @@ export default function StepPage() {
     if (isLoading || !wizard.proposal) return <div className="text-center p-10">Lade Projektantrag...</div>;
     return (
       <>
-        <h2 className="text-2xl font-semibold mb-4">Schritt 7: Dein Projektantrag</h2>
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Schritt 7: Dein Projektantrag</h2>
         <div className="p-4 bg-green-50 border-l-4 border-green-500">
-          <h4 className="font-semibold">Fast geschafft!</h4>
-          <p className="mt-2 text-sm">
+          <h4 className="font-semibold text-green-800">Fast geschafft!</h4>
+          <p className="mt-2 text-sm text-green-700">
             Überprüfe den generierten Projektantrag. Du kannst den Markdown-Text auf der linken Seite kopieren oder bei Bedarf anpassen.
           </p>
         </div>
@@ -91,7 +91,12 @@ export default function StepPage() {
         <div className="lg:col-span-2 p-4 md:p-8 lg:overflow-y-auto">
             {renderStepContent()}
         </div>
-        <aside className="hidden lg:block lg:col-span-1 p-4 md:p-8 bg-gray-100 border-l lg:overflow-y-auto">
+        {/* Mobile: Show copilot content below main content */}
+        <div className="block lg:hidden p-4 md:p-8 bg-gray-50 border-t border-gray-200">
+            {renderCopilotContent()}
+        </div>
+        {/* Desktop: Show copilot content in sidebar */}
+        <aside className="hidden lg:block lg:col-span-1 p-4 md:p-8 bg-gray-50 border-l border-gray-200 lg:overflow-y-auto">
             {renderCopilotContent()}
         </aside>
         <div className="lg:col-span-3 border-t p-4 bg-white">

@@ -66,8 +66,8 @@ const EditableBudgetTable: React.FC<{
   const deleteRow = (id: string) => {
     const rowToDelete = rows.find(r => r.id === id);
     const confirmMessage = rowToDelete
-      ? `Möchten Sie diese Zeile wirklich löschen?\n\n${rowToDelete.kostentyp}: ${rowToDelete.beschreibung} (${rowToDelete.wert} EUR, Jahr ${rowToDelete.jahr})`
-      : 'Möchten Sie diese Zeile wirklich löschen?';
+      ? `Möchtest du diese Zeile wirklich löschen?\n\n${rowToDelete.kostentyp}: ${rowToDelete.beschreibung} (${rowToDelete.wert} EUR, Jahr ${rowToDelete.jahr})`
+      : 'Möchtest du diese Zeile wirklich löschen?';
 
     if (window.confirm(confirmMessage)) {
       onRowsChange(rows.filter(row => row.id !== id));
@@ -328,7 +328,7 @@ const BudgetChat: React.FC<{ demand: any; budgetTable: BudgetTableRow[] }> = ({ 
             <div className="p-4 border-b bg-gray-50">
                 <h2 className="text-xl font-semibold">Budget-Assistent</h2>
                 <p className="text-sm text-gray-600 mt-1">
-                    Stellen Sie Fragen zur CAPEX/OPEX-Klassifizierung oder lassen Sie sich beraten.
+                    Stelle Fragen zur CAPEX/OPEX-Klassifizierung oder lass dich beraten.
                 </p>
             </div>
 
@@ -336,7 +336,7 @@ const BudgetChat: React.FC<{ demand: any; budgetTable: BudgetTableRow[] }> = ({ 
                 {messages.length === 0 && (
                     <div className="text-center text-gray-500 p-4">
                         <p>Willkommen beim Budget-Assistenten!</p>
-                        <p className="text-sm mt-2">Ich kann Ihnen bei der CAPEX/OPEX-Klassifizierung helfen.</p>
+                        <p className="text-sm mt-2">Ich kann dir bei der CAPEX/OPEX-Klassifizierung helfen.</p>
                     </div>
                 )}
                 {messages.map((msg, index) => (
@@ -364,7 +364,7 @@ const BudgetChat: React.FC<{ demand: any; budgetTable: BudgetTableRow[] }> = ({ 
                         onChange={e => setInput(e.target.value)}
                         onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
                         className="w-full p-2 border rounded-md"
-                        placeholder="Ihre Frage..."
+                        placeholder="Deine Frage..."
                     />
                     <button
                         onClick={() => handleSendMessage()}
@@ -481,14 +481,13 @@ export default function StepPage() {
             alert(`Der Budget-Assistent benötigt mehr Informationen: ${data.frage}`);
           } else if (data.message) {
             console.warn("LLM returned unstructured text:", data.message);
-            alert("Die automatische Klassifizierung konnte nicht durchgeführt werden. Bitte füllen Sie die Tabelle manuell aus.");
+            alert("Die automatische Klassifizierung konnte nicht durchgeführt werden. Bitte fülle die Tabelle manuell aus.");
           } else {
-            console.error("Unexpected API response format:", data);
-            alert("Fehler bei der automatischen Klassifizierung. Bitte füllen Sie die Tabelle manuell aus.");
+alert("Fehler bei der automatischen Klassifizierung. Bitte fülle die Tabelle manuell aus.");
           }
         } catch (error) {
           console.error('Error analyzing demand:', error);
-          alert("Fehler bei der automatischen Klassifizierung. Bitte füllen Sie die Tabelle manuell aus.");
+          alert("Fehler bei der automatischen Klassifizierung. Bitte fülle die Tabelle manuell aus.");
         } finally {
           setIsAnalyzing(false);
         }
@@ -592,14 +591,14 @@ export default function StepPage() {
         alert(`Der Budget-Assistent benötigt mehr Informationen: ${data.frage}`);
       } else if (data.message) {
         console.warn("LLM returned unstructured text:", data.message);
-        alert("Die automatische Klassifizierung konnte nicht durchgeführt werden. Bitte versuchen Sie es erneut.");
+        alert("Die automatische Klassifizierung konnte nicht durchgeführt werden. Bitte versuche es erneut.");
       } else {
         console.error("Unexpected API response format:", data);
-        alert("Fehler bei der erneuten Klassifizierung. Bitte versuchen Sie es erneut.");
+        alert("Fehler bei der erneuten Klassifizierung. Bitte versuche es erneut.");
       }
     } catch (error) {
       console.error('Error reanalyzing demand:', error);
-      alert("Fehler bei der erneuten Klassifizierung. Bitte versuchen Sie es erneut.");
+      alert("Fehler bei der erneuten Klassifizierung. Bitte versuche es erneut.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -621,10 +620,10 @@ export default function StepPage() {
               value={wizard.text}
               onChange={(e) => wizard.setText(e.target.value)}
               className="w-full p-3 border rounded-md text-sm min-h-[150px]"
-              placeholder="Beschreiben Sie Ihren Demand..."
+              placeholder="Beschreibe deinen Demand..."
             />
             <p className="mt-1 text-xs text-gray-500">
-              Sie können die Beschreibung hier anpassen. Klicken Sie dann auf "Neu analysieren", um die Budget-Tabelle zu aktualisieren.
+              Du kannst die Beschreibung hier anpassen. Klicke dann auf "Neu analysieren", um die Budget-Tabelle zu aktualisieren.
             </p>
           </div>
 
@@ -669,13 +668,13 @@ export default function StepPage() {
                   </div>
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  Diese Werte wurden aus Ihrer Demand-Beschreibung extrahiert und können angepasst werden.
+                  Diese Werte wurden aus deiner Demand-Beschreibung extrahiert und können angepasst werden.
                 </p>
               </div>
 
               <div className="mb-4 p-4 bg-blue-50 border-l-4 border-blue-500 text-sm">
                 <p className="font-semibold mb-2">Hinweis:</p>
-                <p>Diese Tabelle wurde automatisch aus Ihrer Demand-Beschreibung generiert. Sie können alle Werte bearbeiten und Zeilen hinzufügen oder löschen.</p>
+                <p>Diese Tabelle wurde automatisch aus deiner Demand-Beschreibung generiert. Du kannst alle Werte bearbeiten und Zeilen hinzufügen oder löschen.</p>
               </div>
               <EditableBudgetTable
                 rows={wizard.budgetTable}

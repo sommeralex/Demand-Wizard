@@ -228,9 +228,9 @@ export default function StepPage() {
     if (!mounted || isLoading || !wizard.rating || !wizard.rating.feedback_text) return <div className="text-center p-10">Lade Bewertung...</div>;
     return (
       <>
-        <h2 className="text-2xl font-semibold mb-4">Schritt 2: Qualitäts-Bewertung</h2>
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Schritt 2: Qualitäts-Bewertung</h2>
         <div className="mt-6 p-4 bg-blue-50 border-l-4 border-blue-500">
-          <h4 className="font-semibold">Dein Feedback vom Copilot</h4>
+          <h4 className="font-semibold text-blue-800">Dein Feedback vom Copilot</h4>
           <p className="mt-2 text-sm text-blue-700">{wizard.rating.feedback_text}</p>
         </div>
       </>
@@ -243,7 +243,12 @@ export default function StepPage() {
         <div className="lg:col-span-2 p-4 md:p-8 lg:overflow-y-auto">
             {renderStepContent()}
         </div>
-        <aside className="hidden lg:block lg:col-span-1 p-4 md:p-8 bg-gray-100 border-l lg:overflow-y-auto">
+        {/* Mobile: Show copilot content below main content */}
+        <div className="block lg:hidden p-4 md:p-8 bg-gray-50 border-t border-gray-200">
+            {renderCopilotContent()}
+        </div>
+        {/* Desktop: Show copilot content in sidebar */}
+        <aside className="hidden lg:block lg:col-span-1 p-4 md:p-8 bg-gray-50 border-l border-gray-200 lg:overflow-y-auto">
             {renderCopilotContent()}
         </aside>
         <div className="lg:col-span-3 border-t p-4 bg-white">

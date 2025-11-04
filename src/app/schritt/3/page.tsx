@@ -140,7 +140,7 @@ export default function StepPage() {
     if (classificationData.error || classificationData.error_message) {
       return (
         <>
-          <h2 className="text-2xl font-semibold mb-4">Schritt 3: Strategische Klassifizierung</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-gray-800">Schritt 3: Strategische Klassifizierung</h2>
           <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-500">
             <h4 className="font-semibold text-yellow-800">Hinweis</h4>
             <p className="mt-2 text-sm text-yellow-700">
@@ -153,9 +153,9 @@ export default function StepPage() {
 
     return (
       <>
-        <h2 className="text-2xl font-semibold mb-4">Schritt 3: Strategische Klassifizierung</h2>
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Schritt 3: Strategische Klassifizierung</h2>
         <div>
-          <h3 className="text-lg font-semibold mb-4">Analyse deiner Ausrichtung</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-800">Analyse deiner Ausrichtung</h3>
           <ul className="space-y-4">
             {Object.entries(wizard.classification).map(([pillar, result]) => (
               <li key={pillar} className="p-3 bg-white rounded-md border">
@@ -177,7 +177,12 @@ export default function StepPage() {
         <div className="lg:col-span-2 p-4 md:p-8 lg:overflow-y-auto">
             {renderStepContent()}
         </div>
-        <aside className="hidden lg:block lg:col-span-1 p-4 md:p-8 bg-gray-100 border-l lg:overflow-y-auto">
+        {/* Mobile: Show copilot content below main content */}
+        <div className="block lg:hidden p-4 md:p-8 bg-gray-50 border-t border-gray-200">
+            {renderCopilotContent()}
+        </div>
+        {/* Desktop: Show copilot content in sidebar */}
+        <aside className="hidden lg:block lg:col-span-1 p-4 md:p-8 bg-gray-50 border-l border-gray-200 lg:overflow-y-auto">
             {renderCopilotContent()}
         </aside>
         <div className="lg:col-span-3 border-t p-4 bg-white">

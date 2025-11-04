@@ -82,7 +82,7 @@ const BreakEvenChart: React.FC<{
     return (
       <div className="text-center p-10 text-gray-500">
         <p>Keine Business Case Daten verfügbar.</p>
-        <p className="text-sm mt-2">Starten Sie die Analyse mit dem Assistenten auf der rechten Seite.</p>
+        <p className="text-sm mt-2">Starte die Analyse mit dem Assistenten auf der rechten Seite.</p>
       </div>
     );
   }
@@ -504,7 +504,7 @@ const BusinessCaseAssumptions: React.FC<{
       },
       empfehlung: nettoGewinn > 0
         ? `Das Projekt ist wirtschaftlich attraktiv mit einem ${breakEvenMonat > 0 ? `Break-Even nach ${breakEvenMonat} Monaten` : 'Break-Even, der nicht innerhalb des Planungshorizonts erreicht wird,'} und einem ROI von ${roi}% über ${planungshorizont} Jahre.`
-        : `Das Projekt ist wirtschaftlich nicht rentabel. Prüfen Sie Optimierungsmöglichkeiten oder erhöhen Sie den erwarteten Nutzen.`,
+        : `Das Projekt ist wirtschaftlich nicht rentabel. Prüfe Optimierungsmöglichkeiten oder erhöhe den erwarteten Nutzen.`,
       risiken: [
         "Nutzen hängt stark von der tatsächlichen Zeitersparnis ab",
         "OPEX könnte bei Skalierung steigen",
@@ -665,7 +665,7 @@ const BusinessCaseAssumptions: React.FC<{
       )}
 
       <div className="text-xs text-gray-500 italic mt-2">
-        💡 Die Berechnung wird automatisch aktualisiert, wenn Sie die Werte ändern.
+        💡 Die Berechnung wird automatisch aktualisiert, wenn du die Werte änderst.
       </div>
     </div>
   );
@@ -737,7 +737,7 @@ const BusinessCaseChat: React.FC<{
         onBusinessCaseUpdate(data);
         setMessages(prev => [...prev, {
           role: 'model',
-          text: `Ihre Business Case Analyse wurde erstellt!\n\n**Break-Even:** ${(data.kennzahlen?.break_even_monat ?? 0) > 0 ? `${data.kennzahlen.break_even_monat} Monate` : 'Nicht erreicht'}\n**ROI:** ${data.kennzahlen.roi_prozent}%\n\n${data.empfehlung || 'Die Analyse ist auf der linken Seite visualisiert.'}`
+          text: `Deine Business Case Analyse wurde erstellt!\n\n**Break-Even:** ${(data.kennzahlen?.break_even_monat ?? 0) > 0 ? `${data.kennzahlen.break_even_monat} Monate` : 'Nicht erreicht'}\n**ROI:** ${data.kennzahlen.roi_prozent}%\n\n${data.empfehlung || 'Die Analyse ist auf der linken Seite visualisiert.'}`
         }]);
       } else if (data.experten_empfehlung) {
         setMessages(prev => [...prev, { role: 'model', text: data.experten_empfehlung }]);
@@ -746,7 +746,7 @@ const BusinessCaseChat: React.FC<{
         const responseText = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
         setMessages(prev => [...prev, {
           role: 'model',
-          text: `Entschuldigung, ich konnte die Antwort nicht richtig verarbeiten. Bitte versuchen Sie es erneut oder formulieren Sie Ihre Anfrage anders.\n\nAntwort-Details (für Debugging):\n\`\`\`\n${responseText}\n\`\`\``
+          text: `Entschuldigung, ich konnte die Antwort nicht richtig verarbeiten. Bitte versuche es erneut oder formuliere deine Anfrage anders.\n\nAntwort-Details (für Debugging):\n\`\`\`\n${responseText}\n\`\`\``
         }]);
       }
     } catch (error) {
@@ -761,7 +761,7 @@ const BusinessCaseChat: React.FC<{
       <div className="p-4 border-b bg-gray-50">
         <h2 className="text-xl font-semibold">Business Case Assistent</h2>
         <p className="text-sm text-gray-600 mt-1">
-          Lassen Sie sich bei der Erstellung eines überzeugenden Business Cases beraten.
+          Lass dich bei der Erstellung eines überzeugenden Business Cases beraten.
         </p>
       </div>
 
@@ -769,7 +769,7 @@ const BusinessCaseChat: React.FC<{
         {messages.length === 0 && (
           <div className="text-center text-gray-500 p-4">
             <p>Willkommen beim Business Case Assistenten!</p>
-            <p className="text-sm mt-2">Ich helfe Ihnen bei der ROI-Analyse und Break-Even-Berechnung.</p>
+            <p className="text-sm mt-2">Ich helfe dir bei der ROI-Analyse und Break-Even-Berechnung.</p>
             <button
               onClick={() => handleSendMessage('Starte die Business Case Analyse', false)}
               className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
@@ -803,7 +803,7 @@ const BusinessCaseChat: React.FC<{
             onChange={e => setInput(e.target.value)}
             onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
             className="w-full p-2 border rounded-md"
-            placeholder="Ihre Frage..."
+            placeholder="Deine Frage..."
           />
           <button
             onClick={() => handleSendMessage()}
@@ -946,7 +946,7 @@ export default function StepPage() {
               value={wizard.text}
               onChange={(e) => wizard.setText(e.target.value)}
               className="w-full p-3 border rounded-md text-sm min-h-[120px]"
-              placeholder="Beschreiben Sie Ihren Demand..."
+              placeholder="Beschreibe deinen Demand..."
             />
           </div>
 

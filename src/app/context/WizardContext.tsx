@@ -89,6 +89,7 @@ interface WizardContextType {
 const WizardContext = createContext<WizardContextType | undefined>(undefined);
 
 const LOCAL_STORAGE_KEY = 'wizardState'; // Define local storage key
+const WIZARD_VERSION = '2.0'; // Version 2.0 includes 7 checklist items (previously 3)
 
 export const WizardProvider = ({ children }: { children: ReactNode }) => {
   // Function to load state from localStorage
@@ -97,7 +98,16 @@ export const WizardProvider = ({ children }: { children: ReactNode }) => {
       const savedState = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (savedState) {
         try {
-          return JSON.parse(savedState);
+          const parsedState = JSON.parse(savedState);
+
+          // Check version compatibility
+          if (parsedState.version !== WIZARD_VERSION) {
+            console.log(`Version mismatch (stored: ${parsedState.version}, current: ${WIZARD_VERSION}). Clearing old data and using defaults.`);
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
+            return {}; // Return empty to use defaults
+          }
+
+          return parsedState;
         } catch (e) {
           console.error("Failed to parse wizard state from localStorage", e);
           return {}; // Return empty object to use default initial states
@@ -147,6 +157,7 @@ export const WizardProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const stateToSave = {
+        version: WIZARD_VERSION, // Include version in saved state
         step, text, rating, classification, similarProjects, recommendation, proposal, checklistItems, budgetTable, budgetStartYear, budgetPlanningHorizon, businessCaseData, businessCaseAssumptions
       };
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));

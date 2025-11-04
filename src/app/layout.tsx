@@ -23,11 +23,11 @@ export default function RootLayout({
         <ApiCacheProvider>
           <WizardProvider>
             <div className="flex flex-col h-screen">
-              <header className="bg-gray-800 text-white p-4 text-center text-2xl font-bold">
-                AI Based Demand Wizard
+              <header className="bg-[#005A9C] text-white p-5 text-center text-2xl font-bold shadow-sm">
+                Demand Wizard
               </header>
               <Stepper />
-              <main className="flex-grow overflow-y-auto">
+              <main className="flex-grow overflow-y-auto bg-white">
                 {children}
               </main>
             </div>
