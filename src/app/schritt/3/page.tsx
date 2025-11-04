@@ -32,6 +32,23 @@ export default function StepPage() {
     if (!wizard.text) return;
     setIsLoading(true);
     try {
+      // Load classification if not already loaded
+      if (!wizard.classification || forceReload) {
+        const classifyRes = await fetch('/api/classify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: wizard.text })
+        });
+        const classifyData = await classifyRes.json();
+
+        // Check if there's an error or valid classification
+        if (classifyData.error || classifyData.error_message) {
+          wizard.setClassification(classifyData);
+        } else {
+          wizard.setClassification(classifyData.strategische_ausrichtung);
+        }
+      }
+
       const similarRes = await fetch('/api/find-similar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: wizard.text, forceReload }) });
       wizard.setSimilarProjects(await similarRes.json());
       const recommendRes = await fetch('/api/recommend-action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ demandText: wizard.text, similarProjects: wizard.similarProjects, forceReload }) });
@@ -49,13 +66,109 @@ export default function StepPage() {
   };
 
   const renderStepContent = () => {
-    if (isLoading || !wizard.classification) return <div className="text-center p-10">Lade Klassifizierung...</div>;
-    const radarChartData = { labels: Object.keys(wizard.classification || {}), datasets: [{ label: 'Strategische Relevanz', data: Object.values(wizard.classification || {}).map(v => scoreToNumber(v.score)), backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: 'rgba(59, 130, 246, 1)' }] }; return <div className='h-full flex flex-col'><div className='relative flex-grow p-4 border rounded-lg'><Radar data={radarChartData} options={{ maintainAspectRatio: false, scales: { r: { suggestedMin: 0, suggestedMax: 3, ticks: { stepSize: 1, display: false } } } }} /></div></div>;
+    if (isLoading || !wizard.classification) {
+      return <div className="text-center p-10">Lade Klassifizierung...</div>;
+    }
+
+    // Check if classification returned an error (too vague description)
+    const classificationData = wizard.classification as any;
+
+    if (classificationData.error || classificationData.error_message) {
+      return (
+        <div className="flex items-center justify-center h-full p-8">
+          <div className="bg-yellow-50 border-l-4 border-yellow-500 p-6 rounded-lg max-w-2xl">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="h-6 w-6 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-lg font-semibold text-yellow-800">Klassifizierung nicht möglich</h3>
+                <p className="mt-2 text-sm text-yellow-700">
+                  {classificationData.error_message || "Eine Zuordnung konnte aufgrund der zu vagen Beschreibung nicht durchgeführt werden."}
+                </p>
+                <p className="mt-3 text-sm text-yellow-700">
+                  💡 <strong>Tipp:</strong> Gehe zurück zu Schritt 1 und ergänze deine Beschreibung mit mehr Details zu Problem, Ziel und Kontext.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const radarChartData = {
+      labels: Object.keys(wizard.classification || {}),
+      datasets: [{
+        label: 'Strategische Relevanz',
+        data: Object.values(wizard.classification || {}).map(v => scoreToNumber(v.score)),
+        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+        borderColor: 'rgba(59, 130, 246, 1)'
+      }]
+    };
+
+    return (
+      <div className='h-full flex flex-col'>
+        <div className='relative flex-grow p-4 border rounded-lg'>
+          <Radar
+            data={radarChartData}
+            options={{
+              maintainAspectRatio: false,
+              scales: {
+                r: {
+                  suggestedMin: 0,
+                  suggestedMax: 3,
+                  ticks: {
+                    stepSize: 1,
+                    display: false
+                  }
+                }
+              }
+            }}
+          />
+        </div>
+      </div>
+    );
   };
 
   const renderCopilotContent = () => {
     if (isLoading || !wizard.classification) return <div className="text-center p-10">Lade Klassifizierung...</div>;
-    return <><h2 className="text-2xl font-semibold mb-4">Schritt 3: Strategische Klassifizierung</h2><div><h3 className="text-lg font-semibold mb-4">Analyse der Ausrichtung</h3><ul className="space-y-4">{Object.entries(wizard.classification).map(([pillar, result]) => (<li key={pillar} className="p-3 bg-white rounded-md border"><p className="font-semibold">{pillar}: <span className="font-bold text-blue-600">{result.score}</span></p><p className="text-sm text-gray-600 mt-1">{result.begruendung}</p></li>))}</ul></div></>;
+
+    // Check if classification returned an error
+    const classificationData = wizard.classification as any;
+    if (classificationData.error || classificationData.error_message) {
+      return (
+        <>
+          <h2 className="text-2xl font-semibold mb-4">Schritt 3: Strategische Klassifizierung</h2>
+          <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-500">
+            <h4 className="font-semibold text-yellow-800">Hinweis</h4>
+            <p className="mt-2 text-sm text-yellow-700">
+              Die Beschreibung enthält nicht genügend Details für eine strategische Klassifizierung.
+            </p>
+          </div>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <h2 className="text-2xl font-semibold mb-4">Schritt 3: Strategische Klassifizierung</h2>
+        <div>
+          <h3 className="text-lg font-semibold mb-4">Analyse deiner Ausrichtung</h3>
+          <ul className="space-y-4">
+            {Object.entries(wizard.classification).map(([pillar, result]) => (
+              <li key={pillar} className="p-3 bg-white rounded-md border">
+                <p className="font-semibold">
+                  {pillar}: <span className="font-bold text-blue-600">{result.score}</span>
+                </p>
+                <p className="text-sm text-gray-600 mt-1">{result.begruendung}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </>
+    );
   };
 
   return (

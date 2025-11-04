@@ -129,7 +129,21 @@ export default function StepPage() {
 
   const renderCopilotContent = () => {
     if (isLoading || !wizard.recommendation) return <div className="text-center p-10">Lade Analyse...</div>;
-    return <><h2 className="text-2xl font-semibold mb-4">Schritt 4: Abhängigkeits- & Duplikatsanalyse</h2><div className={`p-4 border-l-4 rounded-r-lg ${wizard.recommendation.empfehlung_aktion === 'MERGE' ? 'bg-red-50 border-red-500' : 'bg-green-50 border-green-500'}`}><h4 className="font-semibold">Empfehlung: {wizard.recommendation.empfehlung_aktion}</h4><p className="mt-2 text-sm">{wizard.recommendation.zusammenfassung_benutzer}</p></div></>;
+    return (
+      <>
+        <h2 className="text-2xl font-semibold mb-4">Schritt 4: Deine Abhängigkeits- & Duplikatsanalyse</h2>
+        <div
+          className={`p-4 border-l-4 rounded-r-lg ${
+            wizard.recommendation.empfehlung_aktion === 'MERGE'
+              ? 'bg-red-50 border-red-500'
+              : 'bg-green-50 border-green-500'
+          }`}
+        >
+          <h4 className="font-semibold">Unsere Empfehlung: {wizard.recommendation.empfehlung_aktion}</h4>
+          <p className="mt-2 text-sm">{wizard.recommendation.zusammenfassung_benutzer}</p>
+        </div>
+      </>
+    );
   };
 
   return (

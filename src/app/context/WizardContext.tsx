@@ -3,7 +3,32 @@
 import { createContext, useContext, useState, ReactNode, useEffect, Dispatch, SetStateAction } from 'react'; // Added useEffect
 
 // --- TYPE DEFINITIONS ---
-interface Rating { bewertung: { klarheit: number; vollstaendigkeit: number; business_value: number; }; projekt_typ?: string; feedback_text: string; }
+interface Rating {
+  bewertung: {
+    klarheit: number;
+    vollstaendigkeit: number;
+    business_value: number;
+    problemstellung?: number;
+    business_ziel?: number;
+    benutzergruppe?: number;
+    budget_indikationen?: number;
+    interner_aufwand?: number;
+    nutzen_indikationen?: number;
+    zeitplan?: number;
+  };
+  projekt_typ?: string;
+  projekt_typ_begruendung?: string;
+  feedback_text: string;
+  einzelbewertungen?: {
+    problemstellung_text?: string;
+    business_ziel_text?: string;
+    benutzergruppe_text?: string;
+    budget_indikationen_text?: string;
+    interner_aufwand_text?: string;
+    nutzen_indikationen_text?: string;
+    zeitplan_text?: string;
+  };
+}
 interface ClassificationResult { [key: string]: { score: string; begruendung: string }; }
 interface SimilarProject { id: string; title: string; status: string; similarity: number; }
 interface Recommendation { empfehlung_aktion: string; target_id: string | null; zusammenfassung_benutzer: string; }

@@ -58,11 +58,31 @@ export default function StepPage() {
 
   const renderCopilotContent = () => {
     if (!projektTypIstProjekt) {
-      return <><h2 className="text-2xl font-semibold mb-4">Schritt 7: Abschluss</h2><div className="p-4 bg-blue-50 border-l-4 border-blue-500"><h4 className="font-semibold">Zusammenfassung</h4><p className="mt-2 text-sm">Ihre Analyse ist vollständig. Alle wichtigen Informationen aus den vorherigen Schritten stehen Ihnen zur Verfügung.</p></div></>;
+      return (
+        <>
+          <h2 className="text-2xl font-semibold mb-4">Schritt 7: Abschluss</h2>
+          <div className="p-4 bg-blue-50 border-l-4 border-blue-500">
+            <h4 className="font-semibold">Zusammenfassung</h4>
+            <p className="mt-2 text-sm">
+              Deine Analyse ist vollständig. Alle wichtigen Informationen aus den vorherigen Schritten stehen dir zur Verfügung.
+            </p>
+          </div>
+        </>
+      );
     }
 
     if (isLoading || !wizard.proposal) return <div className="text-center p-10">Lade Projektantrag...</div>;
-    return <><h2 className="text-2xl font-semibold mb-4">Schritt 7: Projektantrag</h2><div className="p-4 bg-green-50 border-l-4 border-green-500"><h4 className="font-semibold">Fast geschafft!</h4><p className="mt-2 text-sm">Überprüfen Sie den generierten Projektantrag. Sie können den Markdown-Text auf der linken Seite kopieren oder bei Bedarf anpassen.</p></div></>;
+    return (
+      <>
+        <h2 className="text-2xl font-semibold mb-4">Schritt 7: Dein Projektantrag</h2>
+        <div className="p-4 bg-green-50 border-l-4 border-green-500">
+          <h4 className="font-semibold">Fast geschafft!</h4>
+          <p className="mt-2 text-sm">
+            Überprüfe den generierten Projektantrag. Du kannst den Markdown-Text auf der linken Seite kopieren oder bei Bedarf anpassen.
+          </p>
+        </div>
+      </>
+    );
   };
 
   return (
