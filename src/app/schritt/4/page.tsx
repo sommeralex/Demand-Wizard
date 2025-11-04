@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWizard } from '../../context/WizardContext';
+import { DeleteApiCacheButton } from '../../components/DeleteApiCacheButton';
 import CytoscapeComponent from 'react-cytoscapejs';
 
 export default function StepPage() {
@@ -115,7 +116,7 @@ export default function StepPage() {
 
     return (
       <div className='h-full flex flex-col'>
-        <div className="w-full flex-grow border rounded-lg bg-gray-50">
+        <div className="w-full flex-grow border rounded-lg bg-gray-50 min-h-[400px]">
           <CytoscapeComponent
             elements={graphElements}
             stylesheet={graphStylesheet}
@@ -128,7 +129,7 @@ export default function StepPage() {
   };
 
   const renderCopilotContent = () => {
-    if (isLoading || !wizard.recommendation) return <div className="text-center p-10">Lade Analyse...</div>;
+    if (!mounted || isLoading || !wizard.recommendation) return <div className="text-center p-10">Lade Analyse...</div>;
     return (
       <>
         <h2 className="text-2xl font-semibold mb-4 text-gray-800">Schritt 4: Deine Abhängigkeits- & Duplikatsanalyse</h2>
@@ -165,6 +166,7 @@ export default function StepPage() {
             <div className="flex flex-col sm:flex-row gap-2 order-2 sm:order-1">
               <button onClick={() => router.back()} disabled={currentStep <= 1} className="px-6 py-2.5 text-sm bg-gray-200 text-gray-800 rounded-lg disabled:opacity-50 font-semibold w-full sm:w-auto">Zurück</button>
               <button onClick={() => { wizard.reset(); router.push('/schritt/1'); }} className="px-6 py-2.5 text-sm bg-red-500 text-white rounded-lg font-semibold w-full sm:w-auto">Sitzungsdaten löschen</button>
+              <DeleteApiCacheButton />
               <button onClick={() => fetchData(true)} disabled={isLoading} className="px-6 py-2.5 text-sm bg-yellow-500 text-white rounded-lg disabled:opacity-50 font-semibold w-full sm:w-auto">Force Reload</button>
             </div>
             <button onClick={handleNext} disabled={isLoading} className="px-8 py-3 bg-blue-600 text-white rounded-lg disabled:opacity-50 font-semibold flex justify-center items-center w-full sm:w-auto order-1 sm:order-2">{isLoading ? <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div> : null} Weiter</button>
