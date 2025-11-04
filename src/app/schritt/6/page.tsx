@@ -319,8 +319,8 @@ const BreakEvenChart: React.FC<{
         <div className="p-4 bg-gray-50 border-l-4 border-gray-500 rounded">
           <p className="text-sm text-gray-600">Break-Even Zeitpunkt</p>
           <p className="text-2xl font-bold text-gray-700">
-            {businessCaseData.kennzahlen?.break_even_monat > 0
-              ? `${businessCaseData.kennzahlen.break_even_monat} Monate`
+            {(businessCaseData.kennzahlen?.break_even_monat ?? 0) > 0
+              ? `${businessCaseData.kennzahlen?.break_even_monat} Monate`
               : 'Nicht erreicht'}
           </p>
         </div>
@@ -737,7 +737,7 @@ const BusinessCaseChat: React.FC<{
         onBusinessCaseUpdate(data);
         setMessages(prev => [...prev, {
           role: 'model',
-          text: `Ihre Business Case Analyse wurde erstellt!\n\n**Break-Even:** ${data.kennzahlen.break_even_monat > 0 ? `${data.kennzahlen.break_even_monat} Monate` : 'Nicht erreicht'}\n**ROI:** ${data.kennzahlen.roi_prozent}%\n\n${data.empfehlung || 'Die Analyse ist auf der linken Seite visualisiert.'}`
+          text: `Ihre Business Case Analyse wurde erstellt!\n\n**Break-Even:** ${(data.kennzahlen?.break_even_monat ?? 0) > 0 ? `${data.kennzahlen.break_even_monat} Monate` : 'Nicht erreicht'}\n**ROI:** ${data.kennzahlen.roi_prozent}%\n\n${data.empfehlung || 'Die Analyse ist auf der linken Seite visualisiert.'}`
         }]);
       } else if (data.experten_empfehlung) {
         setMessages(prev => [...prev, { role: 'model', text: data.experten_empfehlung }]);
