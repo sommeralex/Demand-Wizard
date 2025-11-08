@@ -129,7 +129,25 @@ export default function StepPage() {
   };
 
   const renderCopilotContent = () => {
-    if (!mounted || isLoading || !wizard.recommendation) return <div className="text-center p-10">Lade Analyse...</div>;
+    if (!mounted || isLoading) return <div className="text-center p-10">Lade Analyse...</div>;
+
+    if (!wizard.recommendation) {
+      return (
+        <>
+          <h2 className="text-2xl font-semibold mb-4 text-gray-800">Schritt 4: Deine Abhängigkeits- & Duplikatsanalyse</h2>
+          <div className="p-4 border-l-4 rounded-r-lg bg-yellow-50 border-yellow-500">
+            <h4 className="font-semibold text-yellow-800">⚠️ Keine Empfehlung verfügbar</h4>
+            <p className="mt-2 text-sm text-yellow-700">
+              Die Analyse konnte keine Empfehlung generieren. Bitte lade die Seite neu oder verwende den "Force Reload" Button.
+            </p>
+          </div>
+        </>
+      );
+    }
+
+    const hasValidRecommendation = wizard.recommendation.zusammenfassung_benutzer &&
+                                   wizard.recommendation.zusammenfassung_benutzer.trim().length > 0;
+
     return (
       <>
         <h2 className="text-2xl font-semibold mb-4 text-gray-800">Schritt 4: Deine Abhängigkeits- & Duplikatsanalyse</h2>
@@ -140,8 +158,26 @@ export default function StepPage() {
               : 'bg-green-50 border-green-500'
           }`}
         >
-          <h4 className={`font-semibold ${wizard.recommendation.empfehlung_aktion === 'MERGE' ? 'text-red-800' : 'text-green-800'}`}>Unsere Empfehlung: {wizard.recommendation.empfehlung_aktion}</h4>
-          <p className={`mt-2 text-sm ${wizard.recommendation.empfehlung_aktion === 'MERGE' ? 'text-red-700' : 'text-green-700'}`}>{wizard.recommendation.zusammenfassung_benutzer}</p>
+          <h4 className={`font-semibold ${wizard.recommendation.empfehlung_aktion === 'MERGE' ? 'text-red-800' : 'text-green-800'}`}>
+            Unsere Empfehlung: {wizard.recommendation.empfehlung_aktion || 'PROCEED'}
+          </h4>
+          {hasValidRecommendation ? (
+            <p className={`mt-2 text-sm ${wizard.recommendation.empfehlung_aktion === 'MERGE' ? 'text-red-700' : 'text-green-700'}`}>
+              {wizard.recommendation.zusammenfassung_benutzer}
+            </p>
+          ) : (
+            <div className="mt-2 text-sm text-yellow-700 bg-yellow-100 p-3 rounded">
+              <p className="font-semibold">⚠️ Keine detaillierte Empfehlung verfügbar</p>
+              <p className="mt-1 text-xs">
+                Die Analyse konnte keine spezifische Empfehlung generieren. Bitte überprüfe die ähnlichen Projekte im Graph und verwende bei Bedarf den "Force Reload" Button.
+              </p>
+              {wizard.recommendation.error && (
+                <p className="mt-2 text-xs font-mono bg-yellow-200 p-2 rounded">
+                  Debug: {wizard.recommendation.error}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </>
     );

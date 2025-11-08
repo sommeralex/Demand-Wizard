@@ -12,14 +12,93 @@ export async function POST(req: NextRequest) {
     const prompt = getClassifyPrompt(text);
 
     const responseText = await generateContent(prompt, process.env.GEMINI_MODEL || "gemini-1.0-pro");
-    
-    const jsonString = responseText.replace(/```json\n|```/g, "").trim();
-    const classification = JSON.parse(jsonString);
 
-    return NextResponse.json(classification);
+    console.log("Classify API raw response:", responseText);
+
+    // Check if response is empty
+    if (!responseText || responseText.trim().length === 0) {
+      console.error("Classify API returned empty response");
+      return NextResponse.json({
+        error: "Leere Antwort vom LLM",
+        dimensionen: {
+          effizienz: 0,
+          innovation: 0,
+          wachstum: 0,
+          risikominimierung: 0
+        },
+        hauptfokus: "Unbekannt",
+        erklaerung: "Die Klassifizierung konnte nicht durchgeführt werden. Bitte versuche es erneut."
+      });
+    }
+
+    const jsonString = responseText.replace(/```json\n|```/g, "").trim();
+
+    // Check if jsonString is empty after cleanup
+    if (!jsonString || jsonString.length === 0) {
+      console.error("Extracted JSON is empty after cleanup");
+      return NextResponse.json({
+        error: "Leerer JSON-String",
+        dimensionen: {
+          effizienz: 0,
+          innovation: 0,
+          wachstum: 0,
+          risikominimierung: 0
+        },
+        hauptfokus: "Unbekannt",
+        erklaerung: "Die Klassifizierung konnte nicht durchgeführt werden. Die Antwort war leer."
+      });
+    }
+
+    try {
+      const classification = JSON.parse(jsonString);
+
+      // Validate that required fields exist
+      if (!classification.dimensionen || !classification.hauptfokus) {
+        console.warn("Classification missing required fields:", classification);
+        return NextResponse.json({
+          dimensionen: classification.dimensionen || {
+            effizienz: 0,
+            innovation: 0,
+            wachstum: 0,
+            risikominimierung: 0
+          },
+          hauptfokus: classification.hauptfokus || "Unbekannt",
+          erklaerung: classification.erklaerung || "Die Klassifizierung enthält nicht alle erforderlichen Informationen.",
+          error: "Unvollständige Daten",
+          ...classification
+        });
+      }
+
+      return NextResponse.json(classification);
+    } catch (parseError) {
+      console.error("JSON parsing error in classify:", parseError);
+      console.error("Failed to parse:", jsonString.substring(0, 500));
+      return NextResponse.json({
+        error: "JSON parsing failed",
+        dimensionen: {
+          effizienz: 0,
+          innovation: 0,
+          wachstum: 0,
+          risikominimierung: 0
+        },
+        hauptfokus: "Unbekannt",
+        erklaerung: `Fehler beim Parsen der Klassifizierung: ${parseError instanceof Error ? parseError.message : 'Unbekannter Fehler'}`,
+        rawResponse: jsonString.substring(0, 200)
+      });
+    }
 
   } catch (error) {
     console.error("Error in classification API route:", error);
-    return NextResponse.json({ error: "Failed to classify text" }, { status: 500 });
+    return NextResponse.json({
+      error: "Failed to classify text",
+      dimensionen: {
+        effizienz: 0,
+        innovation: 0,
+        wachstum: 0,
+        risikominimierung: 0
+      },
+      hauptfokus: "Unbekannt",
+      erklaerung: "Ein unerwarteter Fehler ist aufgetreten."
+    }, { status: 500 });
   }
 }

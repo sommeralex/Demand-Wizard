@@ -306,19 +306,59 @@ const BudgetChat: React.FC<{ demand: any; budgetTable: BudgetTableRow[] }> = ({ 
                     forceReload
                 })
             });
-            const data = await res.json();
 
+            // Check HTTP status
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({ error: 'Unbekannter Fehler' }));
+                console.error("Budget assistant API error (HTTP):", res.status, errorData);
+                setMessages(prev => [...prev, {
+                    role: 'model',
+                    text: `❌ **Fehler (${res.status}):**\n\n${errorData.error || 'Der Server hat einen Fehler zurückgegeben.'}\n\n${errorData.details ? `**Details:** ${errorData.details}\n\n` : ''}Bitte versuche es erneut.`
+                }]);
+                return;
+            }
+
+            const data = await res.json();
+            console.log("Budget assistant response:", data);
+
+            // Handle error responses
+            if (data.error) {
+                console.error("Budget assistant error response:", data);
+                let errorMessage = `❌ **Fehler:**\n\n${data.error}`;
+                if (data.details) {
+                    errorMessage += `\n\n**Details:** ${data.details}`;
+                }
+                if (data.rawResponse) {
+                    errorMessage += `\n\n**Debug-Info:** ${data.rawResponse}`;
+                }
+                setMessages(prev => [...prev, { role: 'model', text: errorMessage }]);
+                return;
+            }
+
+            // Handle successful responses
             if (data.message) {
                 setMessages(prev => [...prev, { role: 'model', text: data.message }]);
             } else if (data.frage || data.experten_empfehlung) {
                 setMessages(prev => [...prev, { role: 'model', text: data.frage || data.experten_empfehlung }]);
+            } else if (data.gesamtschaetzung && data.opex && data.capex) {
+                // This is a classification result - shouldn't happen in chat but handle it gracefully
+                setMessages(prev => [...prev, {
+                    role: 'model',
+                    text: `Die Klassifizierung wurde erstellt:\n\n**Gesamtschätzung:** ${data.gesamtschaetzung}\n\n**OPEX:** ${data.opex.summe} EUR\n**CAPEX:** ${data.capex.summe} EUR`
+                }]);
             } else {
                 console.warn("Unexpected API response format:", data);
-                setMessages(prev => [...prev, { role: 'model', text: "Ein unerwarteter Fehler ist aufgetreten." }]);
+                setMessages(prev => [...prev, {
+                    role: 'model',
+                    text: `⚠️ **Unerwartete Antwort**\n\nDer Assistent hat eine Antwort in einem unerwarteten Format zurückgegeben.\n\n**Debug-Info:**\n\`\`\`json\n${JSON.stringify(data, null, 2).substring(0, 300)}\n\`\`\`\n\nBitte versuche es erneut oder formuliere deine Frage anders.`
+                }]);
             }
         } catch (error) {
-            console.error("Budget assistant API error:", error);
-            setMessages(prev => [...prev, { role: 'model', text: "Fehler bei der Kommunikation mit dem Assistenten." }]);
+            console.error("Budget assistant API error (exception):", error);
+            setMessages(prev => [...prev, {
+                role: 'model',
+                text: `❌ **Verbindungsfehler:**\n\nEs gab ein Problem bei der Kommunikation mit dem Assistenten.\n\n**Fehler:** ${error instanceof Error ? error.message : 'Unbekannter Fehler'}\n\nBitte überprüfe deine Internetverbindung und versuche es erneut.`
+            }]);
         }
         finally { setIsLoading(false); }
     };
