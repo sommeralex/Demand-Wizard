@@ -4,12 +4,12 @@ import { generateContent } from "../../../lib/llm";
 
 export async function POST(req: NextRequest) {
   try {
-    const { text } = await req.json();
+    const { text, locale = 'de' } = await req.json();
     if (!text) {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
     }
 
-    const prompt = getClassifyPrompt(text);
+    const prompt = getClassifyPrompt(text, locale);
 
     const responseText = await generateContent(prompt, process.env.GEMINI_MODEL || "gemini-1.0-pro");
 

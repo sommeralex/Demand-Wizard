@@ -7,7 +7,7 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/schritt/1');
+    router.replace('/step/1');
   }, [router]);
 
   return (

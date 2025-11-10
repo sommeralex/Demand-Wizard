@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWizard } from '../../context/WizardContext';
+import { useI18n } from '../../../context/I18nContext';
 import ReactMarkdown from 'react-markdown';
 import React from 'react';
 import { Chart } from 'react-chartjs-2';
@@ -395,7 +396,8 @@ const BusinessCaseAssumptions: React.FC<{
     jaehrlicheUmsatzsteigerung: number;
   };
   onAssumptionsChange: (assumptions: any) => void;
-}> = ({ opexTotal, capexTotal, yearlyOpex, onCalculate, assumptions, onAssumptionsChange }) => {
+  t: any;
+}> = ({ opexTotal, capexTotal, yearlyOpex, onCalculate, assumptions, onAssumptionsChange, t }) => {
   const [isMounted, setIsMounted] = useState(false);
 
   const planungshorizont = assumptions.planungshorizont;
@@ -527,20 +529,19 @@ const BusinessCaseAssumptions: React.FC<{
 
   return (
     <div className="space-y-4 p-4 bg-white rounded-lg border">
-      <h3 className="text-lg font-semibold mb-4">Annahmen für Business Case</h3>
+      <h3 className="text-lg font-semibold mb-4">{t.step6.assumptions}</h3>
 
       <div className="p-3 bg-blue-50 border-l-4 border-blue-500 text-sm mb-4">
-        <p className="font-semibold text-blue-900">ℹ️ Wichtig: Zeitlicher Ablauf</p>
+        <p className="font-semibold text-blue-900">ℹ️ {t.step6.importantTimeline}</p>
         <p className="text-blue-800 mt-1">
-          Die Nutzenrealisierung (Einsparungen & Umsatzsteigerung) beginnt <strong>ein Jahr nach dem Investitionsjahr</strong>.
-          Beispiel: Investition in 2025 → Nutzen ab 2026.
+          {t.step6.timelineExplanation}
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Planungshorizont (Jahre)
+            {t.step6.planningHorizonYears}
           </label>
           <input
             type="number"
@@ -554,7 +555,7 @@ const BusinessCaseAssumptions: React.FC<{
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Betroffene Mitarbeiter
+            {t.step6.affectedEmployees}
           </label>
           <input
             type="number"
@@ -567,7 +568,7 @@ const BusinessCaseAssumptions: React.FC<{
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Zeitaufwand (Std/Tag)
+            {t.step6.timePerDay}
           </label>
           <input
             type="number"
@@ -582,7 +583,7 @@ const BusinessCaseAssumptions: React.FC<{
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Reduktion (%)
+            {t.step6.reduction}
           </label>
           <input
             type="number"
@@ -596,7 +597,7 @@ const BusinessCaseAssumptions: React.FC<{
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Stundensatz (EUR)
+            {t.step6.hourlyRate}
           </label>
           <input
             type="number"
@@ -609,7 +610,7 @@ const BusinessCaseAssumptions: React.FC<{
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Arbeitstage/Jahr
+            {t.step6.workdaysPerYear}
           </label>
           <input
             type="number"
@@ -624,10 +625,10 @@ const BusinessCaseAssumptions: React.FC<{
 
       {/* Separator */}
       <div className="border-t pt-4">
-        <h4 className="text-sm font-semibold text-gray-700 mb-3">Zusätzlicher Nutzen (optional)</h4>
+        <h4 className="text-sm font-semibold text-gray-700 mb-3">{t.step6.additionalBenefit}</h4>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Jährliche Umsatzsteigerung / Erlös (EUR)
+            {t.step6.yearlyRevenueIncrease}
           </label>
           <input
             type="number"
@@ -638,34 +639,34 @@ const BusinessCaseAssumptions: React.FC<{
             }}
             className="w-full p-2 border rounded-md"
             min="0"
-            placeholder="z.B. 50000"
+            placeholder={t.step6.revenueIncreasePlaceholder}
           />
           <p className="text-xs text-gray-500 mt-1">
-            Erwartete Umsatzsteigerung durch neue Features, mehr Kunden, höhere Conversion, etc.
+            {t.step6.revenueIncreaseHint}
           </p>
         </div>
       </div>
 
       {isMounted && (
         <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-500 text-sm">
-          <p className="font-semibold text-blue-900">Berechneter jährlicher Gesamtnutzen:</p>
+          <p className="font-semibold text-blue-900">{t.step6.calculatedYearlyBenefit}</p>
           <p className="text-blue-800">
-            <span className="font-semibold">Einsparungen:</span> {mitarbeiterAnzahl} MA × {(stundenProTag * reduktionProzent / 100).toFixed(1)}h/Tag × {arbeitstageProJahr} Tage × {stundensatz} EUR/h
-            = <span className="font-bold">{formatCurrency(mitarbeiterAnzahl * (stundenProTag * reduktionProzent / 100) * arbeitstageProJahr * stundensatz)} EUR/Jahr</span>
+            <span className="font-semibold">{t.step6.savingsLabel}</span> {mitarbeiterAnzahl} MA × {(stundenProTag * reduktionProzent / 100).toFixed(1)}h/Tag × {arbeitstageProJahr} Tage × {stundensatz} EUR/h
+            = <span className="font-bold">{formatCurrency(mitarbeiterAnzahl * (stundenProTag * reduktionProzent / 100) * arbeitstageProJahr * stundensatz)} {t.step6.perYear}</span>
           </p>
           {jaehrlicheUmsatzsteigerung > 0 && (
             <p className="text-blue-800 mt-1">
-              <span className="font-semibold">+ Erlös:</span> {formatCurrency(jaehrlicheUmsatzsteigerung)} EUR/Jahr
+              <span className="font-semibold">{t.step6.revenueLabel}</span> {formatCurrency(jaehrlicheUmsatzsteigerung)} {t.step6.perYear}
             </p>
           )}
           <p className="text-blue-900 font-bold mt-2 pt-2 border-t border-blue-200">
-            = Gesamtnutzen: {formatCurrency((mitarbeiterAnzahl * (stundenProTag * reduktionProzent / 100) * arbeitstageProJahr * stundensatz) + jaehrlicheUmsatzsteigerung)} EUR/Jahr
+            {t.step6.totalBenefitLabel} {formatCurrency((mitarbeiterAnzahl * (stundenProTag * reduktionProzent / 100) * arbeitstageProJahr * stundensatz) + jaehrlicheUmsatzsteigerung)} {t.step6.perYear}
           </p>
         </div>
       )}
 
       <div className="text-xs text-gray-500 italic mt-2">
-        💡 Die Berechnung wird automatisch aktualisiert, wenn du die Werte änderst.
+        💡 {t.step6.autoUpdateHint}
       </div>
     </div>
   );
@@ -687,7 +688,9 @@ const BusinessCaseChat: React.FC<{
     arbeitstageProJahr: number;
     jaehrlicheUmsatzsteigerung: number;
   };
-}> = ({ demand, opexTotal, capexTotal, businessCaseData, onBusinessCaseUpdate, currentAssumptions }) => {
+  t: any;
+  locale: string;
+}> = ({ demand, opexTotal, capexTotal, businessCaseData, onBusinessCaseUpdate, currentAssumptions, t, locale }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -718,7 +721,8 @@ const BusinessCaseChat: React.FC<{
           capexTotal,
           businessCaseData,
           currentAssumptions,
-          forceReload
+          forceReload,
+          locale
         })
       });
       const data = await res.json();
@@ -759,22 +763,22 @@ const BusinessCaseChat: React.FC<{
   return (
     <div className="h-full flex flex-col bg-white rounded-lg shadow-md border">
       <div className="p-4 border-b bg-gray-50">
-        <h2 className="text-xl font-semibold">Business Case Assistent</h2>
+        <h2 className="text-xl font-semibold">{t.step6.businessCaseAssistant}</h2>
         <p className="text-sm text-gray-600 mt-1">
-          Lass dich bei der Erstellung eines überzeugenden Business Cases beraten.
+          {t.step6.businessCaseAssistantDesc}
         </p>
       </div>
 
       <div className="flex-grow p-6 overflow-y-auto space-y-4">
         {messages.length === 0 && (
           <div className="text-center text-gray-500 p-4">
-            <p>Willkommen beim Business Case Assistenten!</p>
-            <p className="text-sm mt-2">Ich helfe dir bei der ROI-Analyse und Break-Even-Berechnung.</p>
+            <p>{t.step6.businessCaseWelcome}</p>
+            <p className="text-sm mt-2">{t.step6.businessCaseHelp}</p>
             <button
-              onClick={() => handleSendMessage('Starte die Business Case Analyse', false)}
+              onClick={() => handleSendMessage(locale === 'en' ? 'Start the business case analysis' : 'Starte die Business Case Analyse', false)}
               className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
-              Analyse starten
+              {t.step6.startAnalysisButton}
             </button>
           </div>
         )}
@@ -788,7 +792,7 @@ const BusinessCaseChat: React.FC<{
         {isLoading && (
           <div className="flex justify-start">
             <div className="p-3 rounded-lg bg-gray-200">
-              <span className="italic">schreibt...</span>
+              <span className="italic">{t.step6.writing}</span>
             </div>
           </div>
         )}
@@ -803,14 +807,14 @@ const BusinessCaseChat: React.FC<{
             onChange={e => setInput(e.target.value)}
             onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
             className="w-full p-2 border rounded-md"
-            placeholder="Deine Frage..."
+            placeholder={t.step6.yourQuestion}
           />
           <button
             onClick={() => handleSendMessage()}
             disabled={isLoading}
             className="px-6 py-2 bg-blue-600 text-white rounded-md disabled:bg-blue-300"
           >
-            Senden
+            {t.step6.send}
           </button>
         </div>
       </div>
@@ -821,10 +825,12 @@ const BusinessCaseChat: React.FC<{
 export default function StepPage() {
   const router = useRouter();
   const wizard = useWizard();
+  const { t, locale } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(40); // percentage for business case (smaller default)
   const [isResizing, setIsResizing] = useState(false);
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
   const currentStep = 6;
 
   // Use assumptions from WizardContext instead of local state
@@ -880,13 +886,24 @@ export default function StepPage() {
 
   useEffect(() => {
     setMounted(true);
+    // Check if screen is large on mount
+    setIsLargeScreen(window.innerWidth >= 1024);
+
+    // Add resize listener
+    const handleResize = () => {
+      setIsLargeScreen(window.innerWidth >= 1024);
+    };
+    window.addEventListener('resize', handleResize);
+
     if (wizard) {
       wizard.setStep(currentStep);
     }
+
+    return () => window.removeEventListener('resize', handleResize);
   }, [currentStep, wizard]);
 
   const handleNext = () => {
-    router.push('/schritt/7');
+    router.push('/step/7');
   };
 
   const handleBusinessCaseUpdate = (data: BusinessCaseData) => {
@@ -934,19 +951,19 @@ export default function StepPage() {
     <div className="flex flex-col min-h-screen lg:h-full">
       <div className="flex flex-col lg:flex-row lg:flex-grow lg:overflow-hidden relative">
         {/* Left side - Demand Text and Break-Even Chart */}
-        <div className="p-4 md:p-8 lg:overflow-y-auto bg-white lg:w-auto" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1024 ? `${100 - sidebarWidth}%` : '100%' }}>
-          <h2 className="text-2xl font-semibold mb-6">Schritt 6: Business Case</h2>
+        <div className="p-4 md:p-8 lg:overflow-y-auto bg-white lg:w-auto" style={{ width: isLargeScreen ? `${100 - sidebarWidth}%` : '100%' }}>
+          <h2 className="text-2xl font-semibold mb-6">{t.step6.title}</h2>
 
           {/* Editable Demand Text */}
           <div className="mb-6">
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Demand-Beschreibung
+              {t.step6.demandDescription}
             </label>
             <textarea
               value={wizard.text}
               onChange={(e) => wizard.setText(e.target.value)}
               className="w-full p-3 border rounded-md text-sm min-h-[120px]"
-              placeholder="Beschreibe deinen Demand..."
+              placeholder={t.step6.demandPlaceholder}
             />
           </div>
 
@@ -986,7 +1003,7 @@ export default function StepPage() {
         />
 
         {/* Right side - Business Case Assumptions + Assistant */}
-        <aside className="hidden lg:block p-4 md:p-8 bg-gray-100 lg:overflow-y-auto space-y-6 lg:w-auto" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1024 ? `${sidebarWidth}%` : '100%' }}>
+        <aside className="hidden lg:block p-4 md:p-8 bg-gray-100 lg:overflow-y-auto space-y-6 lg:w-auto" style={{ width: isLargeScreen ? `${sidebarWidth}%` : '100%' }}>
           <BusinessCaseAssumptions
             opexTotal={avgOpexPerYear}
             capexTotal={capexSum}
@@ -994,6 +1011,7 @@ export default function StepPage() {
             onCalculate={handleBusinessCaseUpdate}
             assumptions={assumptions}
             onAssumptionsChange={setAssumptions}
+            t={t}
           />
 
           <div className="border-t pt-6">
@@ -1004,6 +1022,8 @@ export default function StepPage() {
               businessCaseData={wizard.businessCaseData}
               onBusinessCaseUpdate={handleBusinessCaseUpdate}
               currentAssumptions={assumptions}
+              t={t}
+              locale={locale}
             />
           </div>
         </aside>
@@ -1018,29 +1038,29 @@ export default function StepPage() {
               disabled={currentStep <= 1}
               className="px-6 py-2.5 text-sm bg-gray-200 text-gray-800 rounded-lg disabled:opacity-50 font-semibold w-full sm:w-auto"
             >
-              Zurück
+              {t.common.back}
             </button>
             <button
-              onClick={() => { wizard.reset(); router.push('/schritt/1'); }}
+              onClick={() => { wizard.reset(); router.push('/step/1'); }}
               className="px-6 py-2.5 text-sm bg-red-500 text-white rounded-lg font-semibold w-full sm:w-auto"
             >
-              Sitzungsdaten löschen
+              {t.common.delete}
             </button>
             <button
               onClick={forceReloadBusinessCase}
               disabled={isLoading}
               className="px-6 py-2.5 text-sm bg-yellow-500 text-white rounded-lg disabled:opacity-50 font-semibold w-full sm:w-auto"
             >
-              Force Reload
+              {t.common.forceReload}
             </button>
           </div>
           <button
             onClick={handleNext}
             disabled={isLoading}
-            className="px-8 py-3 bg-blue-600 text-white rounded-lg disabled:opacity-50 font-semibold flex justify-center items-center w-full sm:w-auto order-1 sm:order-2"
+            className="px-8 py-3 bg-[#005A9C] text-white rounded-lg hover:bg-[#004A7C] disabled:opacity-50 font-semibold flex justify-center items-center w-full sm:w-auto order-1 sm:order-2"
           >
             {isLoading ? <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div> : null}
-            Weiter
+            {t.common.next}
           </button>
         </div>
       </div>

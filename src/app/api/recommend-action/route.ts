@@ -4,12 +4,12 @@ import { generateContent } from "../../../lib/llm";
 
 export async function POST(req: NextRequest) {
   try {
-    const { demandText, similarProjects } = await req.json();
+    const { demandText, similarProjects, locale = 'de' } = await req.json();
     if (!demandText || !similarProjects) {
       return NextResponse.json({ error: "demandText and similarProjects are required" }, { status: 400 });
     }
 
-    const prompt = getRecommendActionPrompt(demandText, similarProjects);
+    const prompt = getRecommendActionPrompt(demandText, similarProjects, locale);
 
     const responseText = await generateContent(prompt, process.env.GEMINI_MODEL || "gemini-1.0-pro");
 

@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWizard } from '../../context/WizardContext';
+import { useI18n } from '../../../context/I18nContext';
 import ReactMarkdown from 'react-markdown';
 import React from 'react';
 
@@ -26,8 +27,9 @@ const EditableBudgetTable: React.FC<{
   rows: BudgetTableRow[],
   onRowsChange: (rows: BudgetTableRow[]) => void,
   startYear: number,
-  planningHorizon: number
-}> = ({ rows, onRowsChange, startYear, planningHorizon }) => {
+  planningHorizon: number,
+  t: any
+}> = ({ rows, onRowsChange, startYear, planningHorizon, t }) => {
   const addRow = () => {
     const newRow: BudgetTableRow = {
       id: Date.now().toString(),
@@ -45,7 +47,7 @@ const EditableBudgetTable: React.FC<{
 
     // Check if year is within planning horizon
     if (newJahr > startYear + planningHorizon - 1) {
-      alert(`Jahr ${newJahr} überschreitet den Planungshorizont (${startYear} - ${startYear + planningHorizon - 1})`);
+      alert(t.step5.yearExceedsHorizon.replace('{year}', newJahr).replace('{start}', startYear).replace('{end}', startYear + planningHorizon - 1));
       return;
     }
 
@@ -66,8 +68,12 @@ const EditableBudgetTable: React.FC<{
   const deleteRow = (id: string) => {
     const rowToDelete = rows.find(r => r.id === id);
     const confirmMessage = rowToDelete
-      ? `Möchtest du diese Zeile wirklich löschen?\n\n${rowToDelete.kostentyp}: ${rowToDelete.beschreibung} (${rowToDelete.wert} EUR, Jahr ${rowToDelete.jahr})`
-      : 'Möchtest du diese Zeile wirklich löschen?';
+      ? t.step5.confirmDeleteDetails
+          .replace('{type}', rowToDelete.kostentyp)
+          .replace('{description}', rowToDelete.beschreibung)
+          .replace('{value}', rowToDelete.wert)
+          .replace('{year}', rowToDelete.jahr)
+      : t.step5.confirmDelete;
 
     if (window.confirm(confirmMessage)) {
       onRowsChange(rows.filter(row => row.id !== id));
@@ -127,12 +133,12 @@ const EditableBudgetTable: React.FC<{
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-xl font-semibold">CAPEX/OPEX Analyse</h3>
+        <h3 className="text-xl font-semibold">{t.step5.capexOpexAnalysis}</h3>
         <button
           onClick={addRow}
           className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
         >
-          + Zeile hinzufügen
+          {t.step5.addRow}
         </button>
       </div>
 
@@ -141,19 +147,19 @@ const EditableBudgetTable: React.FC<{
           <thead className="bg-gray-50">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Jahr
+                {t.step5.year}
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Kostentyp
+                {t.step5.costType}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Beschreibung der Tätigkeit
+                {t.step5.activityDescription}
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Wert (EUR)
+                {t.step5.value}
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Aktionen
+                {t.step5.actions}
               </th>
             </tr>
           </thead>
@@ -187,7 +193,7 @@ const EditableBudgetTable: React.FC<{
                     value={row.beschreibung}
                     onChange={(e) => updateRow(row.id, 'beschreibung', e.target.value)}
                     className="border rounded px-2 py-1 w-full"
-                    placeholder="z.B. Anschaffung eines Neuwagens"
+                    placeholder={t.step5.activityPlaceholder}
                   />
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
@@ -196,7 +202,7 @@ const EditableBudgetTable: React.FC<{
                     value={row.wert}
                     onChange={(e) => updateRow(row.id, 'wert', e.target.value)}
                     className="border rounded px-2 py-1 w-full"
-                    placeholder="z.B. 50.000"
+                    placeholder={t.step5.valuePlaceholder}
                   />
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
@@ -204,15 +210,15 @@ const EditableBudgetTable: React.FC<{
                     <button
                       onClick={() => copyRow(row)}
                       className="text-blue-600 hover:text-blue-800 text-sm"
-                      title="Zeile kopieren (Jahr +1)"
+                      title={t.step5.copyRowTooltip}
                     >
-                      Kopieren
+                      {t.step5.copy}
                     </button>
                     <button
                       onClick={() => deleteRow(row.id)}
                       className="text-red-600 hover:text-red-800 text-sm"
                     >
-                      Löschen
+                      {t.common.delete}
                     </button>
                   </div>
                 </td>
@@ -249,22 +255,22 @@ const EditableBudgetTable: React.FC<{
 
             {/* Overall totals */}
             <tr className="bg-blue-100">
-              <td className="px-4 py-3" colSpan={3}>OPEX Gesamt (über {planningHorizon} Jahre)</td>
+              <td className="px-4 py-3" colSpan={3}>{t.step5.opexTotal.replace('{years}', planningHorizon)}</td>
               <td className="px-4 py-3">{summary.opexSum.toLocaleString('de-DE')} EUR</td>
               <td></td>
             </tr>
             <tr className="bg-blue-50 text-xs">
-              <td className="px-4 py-2" colSpan={3}>↳ Ø OPEX pro Jahr</td>
+              <td className="px-4 py-2" colSpan={3}>{t.step5.avgOpexPerYear}</td>
               <td className="px-4 py-2">{summary.avgOpexPerYear.toLocaleString('de-DE')} EUR</td>
               <td></td>
             </tr>
             <tr className="bg-green-100">
-              <td className="px-4 py-3" colSpan={3}>CAPEX Gesamt</td>
+              <td className="px-4 py-3" colSpan={3}>{t.step5.capexTotal}</td>
               <td className="px-4 py-3">{summary.capexSum.toLocaleString('de-DE')} EUR</td>
               <td></td>
             </tr>
             <tr className="bg-gray-200">
-              <td className="px-4 py-4" colSpan={3}>Gesamtsumme (CAPEX + OPEX gesamt)</td>
+              <td className="px-4 py-4" colSpan={3}>{t.step5.grandTotal}</td>
               <td className="px-4 py-4">{summary.total.toLocaleString('de-DE')} EUR</td>
               <td></td>
             </tr>
@@ -275,7 +281,7 @@ const EditableBudgetTable: React.FC<{
   );
 };
 
-const BudgetChat: React.FC<{ demand: any; budgetTable: BudgetTableRow[] }> = ({ demand, budgetTable }) => {
+const BudgetChat: React.FC<{ demand: any; budgetTable: BudgetTableRow[], t: any, locale: string }> = ({ demand, budgetTable, t, locale }) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -303,7 +309,8 @@ const BudgetChat: React.FC<{ demand: any; budgetTable: BudgetTableRow[] }> = ({ 
                     message: messageToSend,
                     demandDescription: demand?.description,
                     budgetTable: budgetTable,
-                    forceReload
+                    forceReload,
+                    locale
                 })
             });
 
@@ -366,17 +373,17 @@ const BudgetChat: React.FC<{ demand: any; budgetTable: BudgetTableRow[] }> = ({ 
     return (
         <div className="h-full flex flex-col bg-white rounded-lg shadow-md border">
             <div className="p-4 border-b bg-gray-50">
-                <h2 className="text-xl font-semibold">Budget-Assistent</h2>
+                <h2 className="text-xl font-semibold">{t.step5.budgetAssistant}</h2>
                 <p className="text-sm text-gray-600 mt-1">
-                    Stelle Fragen zur CAPEX/OPEX-Klassifizierung oder lass dich beraten.
+                    {t.step5.budgetAssistantDesc}
                 </p>
             </div>
 
             <div className="flex-grow p-6 overflow-y-auto space-y-4">
                 {messages.length === 0 && (
                     <div className="text-center text-gray-500 p-4">
-                        <p>Willkommen beim Budget-Assistenten!</p>
-                        <p className="text-sm mt-2">Ich kann dir bei der CAPEX/OPEX-Klassifizierung helfen.</p>
+                        <p>{t.step5.budgetAssistantWelcome}</p>
+                        <p className="text-sm mt-2">{t.step5.budgetAssistantHelp}</p>
                     </div>
                 )}
                 {messages.map((msg, index) => (
@@ -389,7 +396,7 @@ const BudgetChat: React.FC<{ demand: any; budgetTable: BudgetTableRow[] }> = ({ 
                 {isLoading && (
                     <div className="flex justify-start">
                         <div className="p-3 rounded-lg bg-gray-200">
-                            <span className="italic">schreibt...</span>
+                            <span className="italic">{t.step5.writing}</span>
                         </div>
                     </div>
                 )}
@@ -404,14 +411,14 @@ const BudgetChat: React.FC<{ demand: any; budgetTable: BudgetTableRow[] }> = ({ 
                         onChange={e => setInput(e.target.value)}
                         onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
                         className="w-full p-2 border rounded-md"
-                        placeholder="Deine Frage..."
+                        placeholder={t.step5.yourQuestion}
                     />
                     <button
                         onClick={() => handleSendMessage()}
                         disabled={isLoading}
                         className="px-6 py-2 bg-blue-600 text-white rounded-md disabled:bg-blue-300"
                     >
-                        Senden
+                        {t.step5.send}
                     </button>
                 </div>
             </div>
@@ -422,18 +429,31 @@ const BudgetChat: React.FC<{ demand: any; budgetTable: BudgetTableRow[] }> = ({ 
 export default function StepPage() {
   const router = useRouter();
   const wizard = useWizard();
+  const { t, locale } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(50); // percentage
   const [isResizing, setIsResizing] = useState(false);
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
   const currentStep = 5;
 
   useEffect(() => {
     setMounted(true);
+    // Check if screen is large on mount
+    setIsLargeScreen(window.innerWidth >= 1024);
+
+    // Add resize listener
+    const handleResize = () => {
+      setIsLargeScreen(window.innerWidth >= 1024);
+    };
+    window.addEventListener('resize', handleResize);
+
     if (wizard) {
       wizard.setStep(currentStep);
     }
+
+    return () => window.removeEventListener('resize', handleResize);
   }, [currentStep, wizard]);
 
   // Helper function to extract planning horizon from demand text
@@ -475,10 +495,11 @@ export default function StepPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               history: [],
-              message: 'Analysiere diesen Demand und erstelle eine CAPEX/OPEX Klassifizierung',
+              message: locale === 'en' ? 'Analyze this demand and create a CAPEX/OPEX classification' : 'Analysiere diesen Demand und erstelle eine CAPEX/OPEX Klassifizierung',
               demandDescription: wizard.text,
               budgetTable: [],
-              forceReload: false
+              forceReload: false,
+              locale
             })
           });
           const data = await res.json();
@@ -538,7 +559,7 @@ alert("Fehler bei der automatischen Klassifizierung. Bitte fülle die Tabelle ma
   }, [wizard.text]);
 
   const handleNext = () => {
-    router.push('/schritt/6');
+    router.push('/step/6');
   };
 
   const handleMouseDown = () => {
@@ -588,10 +609,11 @@ alert("Fehler bei der automatischen Klassifizierung. Bitte fülle die Tabelle ma
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           history: [],
-          message: 'Analysiere diesen Demand und erstelle eine CAPEX/OPEX Klassifizierung',
+          message: locale === 'en' ? 'Analyze this demand and create a CAPEX/OPEX classification' : 'Analysiere diesen Demand und erstelle eine CAPEX/OPEX Klassifizierung',
           demandDescription: wizard.text,
           budgetTable: [],
-          forceReload: true
+          forceReload: true,
+          locale
         })
       });
       const data = await res.json();
@@ -648,39 +670,39 @@ alert("Fehler bei der automatischen Klassifizierung. Bitte fülle die Tabelle ma
     <div className="flex flex-col min-h-screen lg:h-full">
       <div className="flex flex-col lg:flex-row lg:flex-grow lg:overflow-hidden relative">
         {/* Left side - Demand Text and Budget Table */}
-        <div className="p-4 md:p-8 lg:overflow-y-auto bg-white lg:w-auto" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1024 ? `${100 - sidebarWidth}%` : '100%' }}>
-          <h2 className="text-2xl font-semibold mb-6">Schritt 5: Budget-Analyse</h2>
+        <div className="p-4 md:p-8 lg:overflow-y-auto bg-white lg:w-auto" style={{ width: isLargeScreen ? `${100 - sidebarWidth}%` : '100%' }}>
+          <h2 className="text-2xl font-semibold mb-6">{t.step5.title}</h2>
 
           {/* Editable Demand Text */}
           <div className="mb-6">
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Demand-Beschreibung
+              {t.step5.demandDescription}
             </label>
             <textarea
               value={wizard.text}
               onChange={(e) => wizard.setText(e.target.value)}
               className="w-full p-3 border rounded-md text-sm min-h-[150px]"
-              placeholder="Beschreibe deinen Demand..."
+              placeholder={t.step5.demandPlaceholder}
             />
             <p className="mt-1 text-xs text-gray-500">
-              Du kannst die Beschreibung hier anpassen. Klicke dann auf "Neu analysieren", um die Budget-Tabelle zu aktualisieren.
+              {t.step5.demandHint}
             </p>
           </div>
 
           {!mounted || isAnalyzing ? (
             <div className="text-center p-10">
               <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-              <p className="mt-4 text-gray-600">{!mounted ? 'Lade...' : 'Analysiere Demand...'}</p>
+              <p className="mt-4 text-gray-600">{!mounted ? t.common.loading : t.step5.analyzing}</p>
             </div>
           ) : (
             <>
               {/* Planning Horizon and Start Year Controls */}
               <div className="mb-6 p-4 bg-gray-50 border rounded-md">
-                <h3 className="font-semibold mb-3">Budget-Parameter</h3>
+                <h3 className="font-semibold mb-3">{t.step5.budgetParameters}</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Startjahr
+                      {t.step5.startYear}
                     </label>
                     <select
                       value={wizard.budgetStartYear}
@@ -694,40 +716,41 @@ alert("Fehler bei der automatischen Klassifizierung. Bitte fülle die Tabelle ma
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Planungshorizont
+                      {t.step5.planningHorizon}
                     </label>
                     <select
                       value={wizard.budgetPlanningHorizon}
                       onChange={(e) => wizard.setBudgetPlanningHorizon(parseInt(e.target.value))}
                       className="w-full p-2 border rounded-md"
                     >
-                      <option value={3}>3 Jahre</option>
-                      <option value={5}>5 Jahre</option>
-                      <option value={7}>7 Jahre</option>
+                      <option value={3}>3 {t.step5.years}</option>
+                      <option value={5}>5 {t.step5.years}</option>
+                      <option value={7}>7 {t.step5.years}</option>
                     </select>
                   </div>
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  Diese Werte wurden aus deiner Demand-Beschreibung extrahiert und können angepasst werden.
+                  {t.step5.parametersHint}
                 </p>
               </div>
 
               <div className="mb-4 p-4 bg-blue-50 border-l-4 border-blue-500 text-sm">
-                <p className="font-semibold mb-2">Hinweis:</p>
-                <p>Diese Tabelle wurde automatisch aus deiner Demand-Beschreibung generiert. Du kannst alle Werte bearbeiten und Zeilen hinzufügen oder löschen.</p>
+                <p className="font-semibold mb-2">{t.step5.hintLabel}</p>
+                <p>{t.step5.tableHint}</p>
               </div>
               <EditableBudgetTable
                 rows={wizard.budgetTable}
                 onRowsChange={wizard.setBudgetTable}
                 startYear={wizard.budgetStartYear}
                 planningHorizon={wizard.budgetPlanningHorizon}
+                t={t}
               />
               <button
                 onClick={handleReanalyze}
                 disabled={isAnalyzing}
                 className="mt-4 px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 disabled:opacity-50"
               >
-                Neu analysieren
+                {t.step5.reanalyze}
               </button>
             </>
           )}
@@ -741,8 +764,8 @@ alert("Fehler bei der automatischen Klassifizierung. Bitte fülle die Tabelle ma
         />
 
         {/* Right side - Budget Assistant Chat */}
-        <aside className="hidden lg:block p-4 md:p-8 bg-gray-100 lg:overflow-y-auto lg:w-auto" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1024 ? `${sidebarWidth}%` : '100%' }}>
-          <BudgetChat demand={{ description: wizard.text }} budgetTable={wizard.budgetTable} />
+        <aside className="hidden lg:block p-4 md:p-8 bg-gray-100 lg:overflow-y-auto lg:w-auto" style={{ width: isLargeScreen ? `${sidebarWidth}%` : '100%' }}>
+          <BudgetChat demand={{ description: wizard.text }} budgetTable={wizard.budgetTable} t={t} locale={locale} />
         </aside>
       </div>
 
@@ -755,29 +778,29 @@ alert("Fehler bei der automatischen Klassifizierung. Bitte fülle die Tabelle ma
               disabled={currentStep <= 1}
               className="px-6 py-2.5 text-sm bg-gray-200 text-gray-800 rounded-lg disabled:opacity-50 font-semibold w-full sm:w-auto"
             >
-              Zurück
+              {t.common.back}
             </button>
             <button
-              onClick={() => { wizard.reset(); router.push('/schritt/1'); }}
+              onClick={() => { wizard.reset(); router.push('/step/1'); }}
               className="px-6 py-2.5 text-sm bg-red-500 text-white rounded-lg font-semibold w-full sm:w-auto"
             >
-              Sitzungsdaten löschen
+              {t.common.delete}
             </button>
             <button
               onClick={handleReanalyze}
               disabled={isAnalyzing}
               className="px-6 py-2.5 text-sm bg-yellow-500 text-white rounded-lg disabled:opacity-50 font-semibold w-full sm:w-auto"
             >
-              Force Reload
+              {t.common.forceReload}
             </button>
           </div>
           <button
             onClick={handleNext}
             disabled={isLoading}
-            className="px-8 py-3 bg-blue-600 text-white rounded-lg disabled:opacity-50 font-semibold flex justify-center items-center w-full sm:w-auto order-1 sm:order-2"
+            className="px-8 py-3 bg-[#005A9C] text-white rounded-lg hover:bg-[#004A7C] disabled:opacity-50 font-semibold flex justify-center items-center w-full sm:w-auto order-1 sm:order-2"
           >
             {isLoading ? <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div> : null}
-            Weiter
+            {t.common.next}
           </button>
         </div>
       </div>

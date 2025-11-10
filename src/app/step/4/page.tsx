@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWizard } from '../../context/WizardContext';
+import { useI18n } from '../../../context/I18nContext';
 import { DeleteApiCacheButton } from '../../components/DeleteApiCacheButton';
 import CytoscapeComponent from 'react-cytoscapejs';
 
 export default function StepPage() {
   const router = useRouter();
   const wizard = useWizard();
+  const { t, locale } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const currentStep = 4;
@@ -22,11 +24,11 @@ export default function StepPage() {
     if (!wizard.text) return;
     setIsLoading(true);
     try {
-      const similarRes = await fetch('/api/find-similar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: wizard.text, forceReload }) });
+      const similarRes = await fetch('/api/find-similar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: wizard.text, forceReload, locale }) });
       const similarProjectsData = await similarRes.json();
       console.log("Similar projects data received:", similarProjectsData);
       wizard.setSimilarProjects(similarProjectsData);
-      const recommendRes = await fetch('/api/recommend-action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ demandText: wizard.text, similarProjects: wizard.similarProjects, forceReload }) });
+      const recommendRes = await fetch('/api/recommend-action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ demandText: wizard.text, similarProjects: wizard.similarProjects, forceReload, locale }) });
       wizard.setRecommendation(await recommendRes.json());
     } catch (error) { console.error(`Error fetching data for step ${currentStep}:`, error); }
     finally { setIsLoading(false); }
@@ -37,16 +39,16 @@ export default function StepPage() {
   }, [wizard.text]);
 
   const handleNext = () => {
-    router.push('/schritt/5');
+    router.push('/step/5');
   };
 
   const renderStepContent = () => {
     if (!mounted || isLoading || !wizard.recommendation || !Array.isArray(wizard.similarProjects)) {
-      return <div className="text-center p-10">Lade Analyse...</div>;
+      return <div className="text-center p-10">{t.step4.loading}</div>;
     }
 
     const graphElements = [
-      { data: { id: 'new-demand', label: 'Ihre Idee', type: 'new' } },
+      { data: { id: 'new-demand', label: t.step4.yourIdea, type: 'new' } },
       ...wizard.similarProjects.map(p => ({
         data: {
           id: p.id,
@@ -129,16 +131,16 @@ export default function StepPage() {
   };
 
   const renderCopilotContent = () => {
-    if (!mounted || isLoading) return <div className="text-center p-10">Lade Analyse...</div>;
+    if (!mounted || isLoading) return <div className="text-center p-10">{t.step4.loading}</div>;
 
     if (!wizard.recommendation) {
       return (
         <>
-          <h2 className="text-2xl font-semibold mb-4 text-gray-800">Schritt 4: Deine Abhängigkeits- & Duplikatsanalyse</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-gray-800">{t.step4.title}</h2>
           <div className="p-4 border-l-4 rounded-r-lg bg-yellow-50 border-yellow-500">
-            <h4 className="font-semibold text-yellow-800">⚠️ Keine Empfehlung verfügbar</h4>
+            <h4 className="font-semibold text-yellow-800">{t.step4.noRecommendation}</h4>
             <p className="mt-2 text-sm text-yellow-700">
-              Die Analyse konnte keine Empfehlung generieren. Bitte lade die Seite neu oder verwende den "Force Reload" Button.
+              {t.step4.noRecommendationText}
             </p>
           </div>
         </>
@@ -150,7 +152,7 @@ export default function StepPage() {
 
     return (
       <>
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Schritt 4: Deine Abhängigkeits- & Duplikatsanalyse</h2>
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">{t.step4.title}</h2>
         <div
           className={`p-4 border-l-4 rounded-r-lg ${
             wizard.recommendation.empfehlung_aktion === 'MERGE'
@@ -159,7 +161,7 @@ export default function StepPage() {
           }`}
         >
           <h4 className={`font-semibold ${wizard.recommendation.empfehlung_aktion === 'MERGE' ? 'text-red-800' : 'text-green-800'}`}>
-            Unsere Empfehlung: {wizard.recommendation.empfehlung_aktion || 'PROCEED'}
+            {t.step4.recommendation}: {wizard.recommendation.empfehlung_aktion || 'PROCEED'}
           </h4>
           {hasValidRecommendation ? (
             <p className={`mt-2 text-sm ${wizard.recommendation.empfehlung_aktion === 'MERGE' ? 'text-red-700' : 'text-green-700'}`}>
@@ -167,9 +169,9 @@ export default function StepPage() {
             </p>
           ) : (
             <div className="mt-2 text-sm text-yellow-700 bg-yellow-100 p-3 rounded">
-              <p className="font-semibold">⚠️ Keine detaillierte Empfehlung verfügbar</p>
+              <p className="font-semibold">{t.step4.noDetailedRecommendation}</p>
               <p className="mt-1 text-xs">
-                Die Analyse konnte keine spezifische Empfehlung generieren. Bitte überprüfe die ähnlichen Projekte im Graph und verwende bei Bedarf den "Force Reload" Button.
+                {t.step4.noDetailedRecommendationText}
               </p>
               {wizard.recommendation.error && (
                 <p className="mt-2 text-xs font-mono bg-yellow-200 p-2 rounded">
@@ -200,12 +202,12 @@ export default function StepPage() {
         <div className="lg:col-span-3 border-t p-4 bg-white">
           <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
             <div className="flex flex-col sm:flex-row gap-2 order-2 sm:order-1">
-              <button onClick={() => router.back()} disabled={currentStep <= 1} className="px-6 py-2.5 text-sm bg-gray-200 text-gray-800 rounded-lg disabled:opacity-50 font-semibold w-full sm:w-auto">Zurück</button>
-              <button onClick={() => { wizard.reset(); router.push('/schritt/1'); }} className="px-6 py-2.5 text-sm bg-red-500 text-white rounded-lg font-semibold w-full sm:w-auto">Sitzungsdaten löschen</button>
+              <button onClick={() => router.back()} disabled={currentStep <= 1} className="px-6 py-2.5 text-sm bg-gray-200 text-gray-800 rounded-lg disabled:opacity-50 font-semibold w-full sm:w-auto">{t.common.back}</button>
+              <button onClick={() => { wizard.reset(); router.push('/step/1'); }} className="px-6 py-2.5 text-sm bg-red-500 text-white rounded-lg font-semibold w-full sm:w-auto">{t.common.delete}</button>
               <DeleteApiCacheButton />
-              <button onClick={() => fetchData(true)} disabled={isLoading} className="px-6 py-2.5 text-sm bg-yellow-500 text-white rounded-lg disabled:opacity-50 font-semibold w-full sm:w-auto">Force Reload</button>
+              <button onClick={() => fetchData(true)} disabled={isLoading} className="px-6 py-2.5 text-sm bg-yellow-500 text-white rounded-lg disabled:opacity-50 font-semibold w-full sm:w-auto">{t.common.forceReload}</button>
             </div>
-            <button onClick={handleNext} disabled={isLoading} className="px-8 py-3 bg-blue-600 text-white rounded-lg disabled:opacity-50 font-semibold flex justify-center items-center w-full sm:w-auto order-1 sm:order-2">{isLoading ? <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div> : null} Weiter</button>
+            <button onClick={handleNext} disabled={isLoading} className="px-8 py-3 bg-blue-600 text-white rounded-lg disabled:opacity-50 font-semibold flex justify-center items-center w-full sm:w-auto order-1 sm:order-2">{isLoading ? <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div> : null} {t.common.next}</button>
           </div>
         </div>
       </div>

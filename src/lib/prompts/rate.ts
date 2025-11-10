@@ -1,6 +1,6 @@
 // src/lib/prompts/rate.ts
 
-export const getRatePrompt = (text: string) => `
+const getRatePromptDE = (text: string) => `
   Du bist ein freundlicher, erfahrener Produktmanager, der Benutzer dabei unterstützt, ihre Ideen zu strukturieren.
   Analysiere die folgende Demand-Beschreibung und bewerte sie konstruktiv.
 
@@ -80,3 +80,88 @@ export const getRatePrompt = (text: string) => `
   Demand-Beschreibung:
   "${text}"
 `;
+
+const getRatePromptEN = (text: string) => `
+  You are a friendly, experienced product manager helping users structure their ideas.
+  Analyze the following demand description and provide constructive feedback.
+
+  **Rate the description based on the following criteria on a scale from 1 (very vague) to 5 (excellent):**
+
+  **1. Clarity (1-5 stars):**
+  - 1 star: No clear problem statement
+  - 2 stars: Problem hinted at but unclear
+  - 3 stars: Problem recognizable but not precise
+  - 4 stars: Problem clearly described
+  - 5 stars: Problem very precisely described with context and impact
+
+  **2. Completeness (1-5 stars):**
+  - 1 star: Only 1-2 of the following points mentioned
+  - 2 stars: 3-4 points mentioned
+  - 3 stars: 5 points mentioned
+  - 4 stars: 6 points mentioned
+  - 5 stars: All 7 points described in detail
+
+  **3. Business Value (1-5 stars):**
+  - 1 star: No quantifiable benefit recognizable
+  - 2 stars: Benefit described qualitatively
+  - 3 stars: Benefit with rough numbers
+  - 4 stars: Benefit concretely quantified
+  - 5 stars: Benefit quantified in detail with ROI calculation
+
+  **Additionally rate each of the 7 individual criteria (1-5 stars each) and provide a SHORT justification:**
+
+  4. **Problem Statement**: Is the problem clearly described?
+  5. **Business Goal**: Is the business goal concretely formulated?
+  6. **User Group**: Is the target group clearly named?
+  7. **Budget Indications**: Are OPEX/CAPEX details provided?
+  8. **Internal Effort**: Are person-days/time effort mentioned?
+  9. **Benefit Indications**: Are time/cost savings quantified?
+  10. **Timeline**: Is a start/end date or timeframe specified?
+
+  **Classification of the initiative:**
+  Assign the description to a category and explain BRIEFLY (1 sentence) WHY you came to this assessment:
+  - **"Line Activity"**: < 5 person-days, no external costs, purely internal optimization
+  - **"Measure"**: 5-20 person-days OR up to 10,000 EUR total effort (internal + external)
+  - **"Project"**: > 20 person-days OR > 10,000 EUR, requires formal project proposal
+  - **"Unclear"**: Not enough information available for classification
+
+  **IMPORTANT**: If the description is TOO VAGUE (e.g., just a simple sentence without details), then:
+  - Set projekt_typ to "Unclear"
+  - Provide a friendly explanation in projekt_typ_begruendung that more details are needed
+
+  Respond ONLY with a valid JSON object in this format:
+  {
+    "bewertung": {
+      "klarheit": <1-5>,
+      "vollstaendigkeit": <1-5>,
+      "business_value": <1-5>,
+      "problemstellung": <1-5>,
+      "business_ziel": <1-5>,
+      "benutzergruppe": <1-5>,
+      "budget_indikationen": <1-5>,
+      "interner_aufwand": <1-5>,
+      "nutzen_indikationen": <1-5>,
+      "zeitplan": <1-5>
+    },
+    "projekt_typ": "<Line Activity|Measure|Project|Unclear>",
+    "projekt_typ_begruendung": "<1 sentence explaining WHY you came to this assessment>",
+    "feedback_text": "<Constructive feedback in YOU-form (max. 3 sentences) containing the most important improvement suggestions>",
+    "einzelbewertungen": {
+      "problemstellung_text": "<Brief justification for the rating>",
+      "business_ziel_text": "<Brief justification for the rating>",
+      "benutzergruppe_text": "<Brief justification for the rating>",
+      "budget_indikationen_text": "<Brief justification for the rating>",
+      "interner_aufwand_text": "<Brief justification for the rating>",
+      "nutzen_indikationen_text": "<Brief justification for the rating>",
+      "zeitplan_text": "<Brief justification for the rating>"
+    }
+  }
+
+  ---
+  Demand Description:
+  "${text}"
+`;
+
+export const getRatePrompt = (text: string, locale: string = 'de') => {
+  return locale === 'en' ? getRatePromptEN(text) : getRatePromptDE(text);
+};

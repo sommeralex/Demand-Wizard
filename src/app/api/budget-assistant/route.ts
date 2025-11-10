@@ -11,24 +11,24 @@ interface BudgetTableRow {
 
 export async function POST(req: NextRequest) {
   try {
-    const { history, message, demandDescription, budgetTable, forceReload } = await req.json();
+    const { history, message, demandDescription, budgetTable, forceReload, locale = 'de' } = await req.json();
     if (!message) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
     }
 
     // Check if this is an initial classification request (no history)
-    const isInitialClassification = (!history || history.length === 0) && message.includes('Analysiere diesen Demand');
+    const isInitialClassification = (!history || history.length === 0) && (message.includes('Analysiere diesen Demand') || message.includes('Analyze this demand'));
 
     let botResponseRaw: string;
 
     if (isInitialClassification) {
       // Use generateContent for initial classification (single-shot)
-      const prompt = getOpexCapexPrompt(demandDescription);
+      const prompt = getOpexCapexPrompt(demandDescription, locale);
       console.log("Using generateContent for initial classification");
       botResponseRaw = await generateContent(prompt, process.env.GEMINI_MODEL || "gemini-1.0-pro", forceReload);
     } else {
       // Use startChat for follow-up conversations
-      const systemPrompt = getOpexCapexChatPrompt(demandDescription, budgetTable);
+      const systemPrompt = getOpexCapexChatPrompt(demandDescription, budgetTable, locale);
       console.log("Using startChat for conversation");
       botResponseRaw = await startChat(
         history || [],

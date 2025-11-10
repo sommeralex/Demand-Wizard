@@ -1,16 +1,18 @@
 // src/lib/prompts/classify.ts
-import { STRATEGY_PILLARS } from '../../data/strategy';
+import { getStrategyPillars } from '../i18n/strategyPillars';
 
-const strategyDefinitions = STRATEGY_PILLARS.map((pillar, index) => `
+const getClassifyPromptDE = (text: string) => {
+  const strategyPillars = getStrategyPillars('de');
+  const strategyDefinitions = strategyPillars.map((pillar, index) => `
   ${index + 1}. **Säule: ${pillar.title}**
       *   Definition: ${pillar.definition}
       *   Beispiel (Hoch): "${pillar.example}"`).join('\n');
 
-const dynamicOutputFormat = STRATEGY_PILLARS.map(pillar => 
+  const dynamicOutputFormat = strategyPillars.map(pillar =>
     `      "${pillar.title}": { "score": "<Hoch/Mittel/Gering>", "begruendung": "<Kurze Begründung>" }`
-).join(',\n');
+  ).join(',\n');
 
-export const getClassifyPrompt = (text: string) => `
+  return `
   Du bist ein freundlicher KI-Portfolio-Analyst, der Benutzer dabei unterstützt, ihre Projektideen zu klassifizieren.
   Deine Aufgabe ist es, neue Projektideen anhand der strategischen Unternehmenssäulen zu klassifizieren.
 
@@ -51,3 +53,62 @@ ${dynamicOutputFormat}
     "error_message": "<Freundliche Erklärung in DU-Form, welche Details fehlen>"
   }
 `;
+};
+
+const getClassifyPromptEN = (text: string) => {
+  const strategyPillars = getStrategyPillars('en');
+  const strategyDefinitions = strategyPillars.map((pillar, index) => `
+  ${index + 1}. **Pillar: ${pillar.title}**
+      *   Definition: ${pillar.definition}
+      *   Example (High): "${pillar.example}"`).join('\n');
+
+  const dynamicOutputFormat = strategyPillars.map(pillar =>
+    `      "${pillar.title}": { "score": "<High/Medium/Low>", "begruendung": "<Brief justification>" }`
+  ).join(',\n');
+
+  return `
+  You are a friendly AI portfolio analyst helping users classify their project ideas.
+  Your task is to classify new project ideas based on strategic company pillars.
+
+  **IMPORTANT**: Only return an error if the description is EXTREMELY VAGUE (e.g., only 1-2 sentences without any context).
+  If the description contains a problem, goal OR sufficient context, perform a classification, even if not all details are present.
+
+  Only for EXTREMELY vague descriptions (less than 2 sentences with no details whatsoever):
+  {
+    "error": "The description is too vague for classification.",
+    "error_message": "<Friendly explanation in YOU-form about which details are missing for a meaningful strategic classification>"
+  }
+
+  ---
+  Here are the definitions of the strategic pillars:
+  ${strategyDefinitions}
+  ---
+
+  Now analyze the following demand:
+
+  Demand:
+  "${text}"
+
+  **Procedure**:
+  1. Check if the description is EXTREMELY VAGUE (only 1-2 sentences without details).
+  2. If YES (extremely vague): Return a JSON object with "error" and "error_message".
+  3. If NO (sufficient details available): Return a relevance score (High, Medium, Low) and brief justification for each pillar.
+
+  Output format for sufficient details (JSON):
+  {
+    "strategische_ausrichtung": {
+${dynamicOutputFormat}
+    }
+  }
+
+  Output format for too vague description (JSON):
+  {
+    "error": "The description is too vague for classification.",
+    "error_message": "<Friendly explanation in YOU-form about which details are missing>"
+  }
+`;
+};
+
+export const getClassifyPrompt = (text: string, locale: string = 'de') => {
+  return locale === 'en' ? getClassifyPromptEN(text) : getClassifyPromptDE(text);
+};

@@ -1,6 +1,6 @@
 // src/lib/prompts/analyze.ts
 
-export const getAnalyzePrompt = (text: string) => `
+const getAnalyzePromptDE = (text: string) => `
   Analysiere die folgende Demand-Beschreibung sehr streng und kritisch.
   Ein Kriterium gilt nur dann als erfüllt (true), wenn es EXPLIZIT und KONKRET im Text erwähnt wird.
   Vage Andeutungen oder implizite Hinweise zählen NICHT als erfüllt.
@@ -51,3 +51,59 @@ export const getAnalyzePrompt = (text: string) => `
   Demand-Beschreibung:
   "${text}"
 `;
+
+const getAnalyzePromptEN = (text: string) => `
+  Analyze the following demand description very strictly and critically.
+  A criterion is only considered fulfilled (true) if it is EXPLICITLY and CONCRETELY mentioned in the text.
+  Vague hints or implicit references do NOT count as fulfilled.
+
+  Check the following 7 criteria:
+
+  1. **Problem Statement** (problem_statement):
+     - Is the concrete problem or challenge explicitly described?
+     - "We need a better app" is NOT sufficient - it must describe WHAT the problem is.
+
+  2. **Business Goal** (business_goal):
+     - Is a measurable or concrete business goal mentioned?
+     - "Better efficiency" alone is NOT enough - it must be concrete (e.g., "20% faster processing").
+
+  3. **Affected User Group** (user_group):
+     - Is the target group explicitly named (e.g., "accounting team", "all employees", "external customers")?
+     - General terms like "we" or "the users" are NOT sufficient.
+
+  4. **Budget Indications (OPEX/CAPEX)** (first_budget_indications):
+     - Are concrete numbers or budget ranges mentioned (e.g., "approx. 50,000 €", "between 10-20k")?
+     - Without numerical specification = false.
+
+  5. **Internal Effort (Person-days)** (first_internal_efforts_indications):
+     - Is the internal time effort mentioned in person-days or hours?
+     - Without concrete time specification = false.
+
+  6. **Benefit Indications (Time/Cost Savings)** (first_timeplan_indications):
+     - Are concrete savings mentioned (e.g., "saves 10 hours per week", "reduces costs by 30%")?
+     - Without measurable specifications = false.
+
+  7. **Timeline (Start/End)** (rough_timeplan):
+     - Is a concrete timeframe mentioned (e.g., "Start in Q2 2025", "6 months duration")?
+     - Without date specifications or timeframe = false.
+
+  IMPORTANT: Be very strict! Only if an aspect is really concretely and explicitly mentioned, set it to true.
+
+  Respond ONLY with a JSON object in this format:
+  {
+    "problem_statement": boolean,
+    "business_goal": boolean,
+    "user_group": boolean,
+    "first_budget_indications": boolean,
+    "first_internal_efforts_indications": boolean,
+    "first_timeplan_indications": boolean,
+    "rough_timeplan": boolean
+  }
+
+  Demand Description:
+  "${text}"
+`;
+
+export const getAnalyzePrompt = (text: string, locale: string = 'de') => {
+  return locale === 'en' ? getAnalyzePromptEN(text) : getAnalyzePromptDE(text);
+};

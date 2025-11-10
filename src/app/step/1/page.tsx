@@ -3,14 +3,23 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWizard, type ChecklistItem } from '../../context/WizardContext';
-import { BAD_EXAMPLE_TEXT, MODERATE_EXAMPLE_TEXT, COMPLETE_EXAMPLE_TEXT } from '../../../data/examples';
+import { useI18n } from '../../../context/I18nContext';
 import { DeleteApiCacheButton } from '../../components/DeleteApiCacheButton';
-import { DEMAND_DESCRIPTION_HINTS, DEMAND_DESCRIPTION_HINT_SHORT } from '../../../lib/ui_hints';
+import { getHints, getPlaceholder } from '../../../lib/i18n/hints';
+import { getChecklistItemDefinitions } from '../../../lib/i18n/checklistItems';
+import { getBadExampleText, getModerateExampleText, getCompleteExampleText } from '../../../lib/i18n/examples';
 import { ExplanationBox } from '../../components/ExplanationBox';
 
 export default function StepPage() {
   const router = useRouter();
   const wizard = useWizard();
+  const { t, locale } = useI18n();
+  const hints = getHints(locale);
+  const placeholder = getPlaceholder(locale);
+  const checklistDefinitions = getChecklistItemDefinitions(locale);
+  const badExampleText = getBadExampleText(locale);
+  const moderateExampleText = getModerateExampleText(locale);
+  const completeExampleText = getCompleteExampleText(locale);
   const [isLoading, setIsLoading] = useState(false);
   const [isChecklistLoading, setIsChecklistLoading] = useState(false);
   const [lastAnalyzedText, setLastAnalyzedText] = useState<string | null>(null);
@@ -20,10 +29,24 @@ export default function StepPage() {
   const [pendingAnalysis, setPendingAnalysis] = useState(false); // Track if text changed during analysis
   const [showInfoPopup, setShowInfoPopup] = useState(false);
   const currentStep = 1; // Hardcode currentStep for this page
+  const prevLocaleRef = useRef<string>(locale);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Update checklist item text when locale changes (preserving checked state)
+  useEffect(() => {
+    if (prevLocaleRef.current !== locale) {
+      prevLocaleRef.current = locale;
+      wizard.setChecklistItems(prevItems =>
+        prevItems.map((item, index) => ({
+          ...item,
+          text: checklistDefinitions[index]?.text || item.text
+        }))
+      );
+    }
+  }, [locale, checklistDefinitions, wizard]);
 
   const debounce = useCallback(<F extends (...args: any[]) => any>(func: F, delay: number) => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -53,7 +76,7 @@ export default function StepPage() {
     setPendingAnalysis(false);
 
     try {
-      const response = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: inputText, forceReload: reload }) });
+      const response = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: inputText, forceReload: reload, locale }) });
       if (!response.ok) throw new Error('Checklist API call failed');
       const analysis = await response.json();
       if (analysis.error) {
@@ -102,9 +125,9 @@ export default function StepPage() {
     try {
       if (wizard.text === lastAnalyzedText && wizard.rating && !reload) {
         // If text hasn't changed and rating is already available, skip API call
-        router.push('/schritt/2');
+        router.push('/step/2');
       } else {
-        const res = await fetch('/api/rate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: wizard.text, forceReload: reload }) });
+        const res = await fetch('/api/rate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: wizard.text, forceReload: reload, locale }) });
         if (!res.ok) throw new Error('Rating API call failed');
         const rating = await res.json();
         if (rating.error) {
@@ -114,17 +137,17 @@ export default function StepPage() {
         }
         wizard.setRating(rating);
         setLastAnalyzedText(wizard.text); // Update lastAnalyzedText after successful rating
-        router.push('/schritt/2');
+        router.push('/step/2');
       }
     } catch (error) { console.error(`Error progressing from step ${currentStep}:`, error); alert("Failed to rate text. Please try again."); }
     finally { setIsLoading(false); setForceReload(false); }
   };
 
   const renderStepContent = () => {
-    if (isLoading && wizard.step !== currentStep) return <div className="text-center p-10">Lade nächsten Schritt...</div>;
-    return <div><textarea rows={15} className="w-full p-4 border rounded-md text-gray-700 placeholder:text-gray-400" value={wizard.text} onChange={(e) => wizard.setText(e.target.value)} placeholder={DEMAND_DESCRIPTION_HINT_SHORT} /><div className="mt-4 flex flex-wrap gap-2"><button onClick={() => wizard.setText(BAD_EXAMPLE_TEXT)} className="px-4 py-2 bg-red-50 text-red-700 border border-red-300 rounded-md text-sm hover:bg-red-100">❌ Schlechtes Beispiel</button><button onClick={() => wizard.setText(MODERATE_EXAMPLE_TEXT)} className="px-4 py-2 bg-yellow-50 text-yellow-700 border border-yellow-300 rounded-md text-sm hover:bg-yellow-100">⚠️ Moderates Beispiel</button><button onClick={() => wizard.setText(COMPLETE_EXAMPLE_TEXT)} className="px-4 py-2 bg-green-50 text-green-700 border border-green-300 rounded-md text-sm hover:bg-green-100">✅ Vollständiges Beispiel</button></div><div className="mt-6">
-        <h3 className="text-md font-semibold text-gray-700 mb-3">Was gehört in eine gute Beschreibung?</h3>
-        {DEMAND_DESCRIPTION_HINTS.map((hint, index) => (
+    if (isLoading && wizard.step !== currentStep) return <div className="text-center p-10">{t.common.loading}</div>;
+    return <div><textarea rows={15} className="w-full p-4 border rounded-md text-gray-700 placeholder:text-gray-400" value={wizard.text} onChange={(e) => wizard.setText(e.target.value)} placeholder={placeholder} /><div className="mt-4 flex flex-wrap gap-2"><button onClick={() => wizard.setText(badExampleText)} className="px-4 py-2 bg-red-50 text-red-700 border border-red-300 rounded-md text-sm hover:bg-red-100">❌ {t.step1.badExample}</button><button onClick={() => wizard.setText(moderateExampleText)} className="px-4 py-2 bg-yellow-50 text-yellow-700 border border-yellow-300 rounded-md text-sm hover:bg-yellow-100">⚠️ {t.step1.moderateExample}</button><button onClick={() => wizard.setText(completeExampleText)} className="px-4 py-2 bg-green-50 text-green-700 border border-green-300 rounded-md text-sm hover:bg-green-100">✅ {t.step1.completeExample}</button></div><div className="mt-6">
+        <h3 className="text-md font-semibold text-gray-700 mb-3">{t.step1.whatBelongs}</h3>
+        {hints.map((hint, index) => (
           <ExplanationBox
             key={hint.id}
             title={hint.title}
@@ -139,9 +162,9 @@ export default function StepPage() {
   const renderCopilotContent = () => {
     return (
       <div>
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Schritt 1: Beschreibe deine Idee</h2>
-        <h3 className="text-lg font-semibold mb-4 text-gray-800">Deine Anforderungs-Checkliste</h3>
-        {isChecklistLoading && <p className="text-gray-600">Analysiere...</p>}
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">{t.step1.title}</h2>
+        <h3 className="text-lg font-semibold mb-4 text-gray-800">{t.step1.checklistTitle}</h3>
+        {isChecklistLoading && <p className="text-gray-600">{t.step1.analyze}...</p>}
         {mounted && (
           <ul className="space-y-3">
             {wizard.checklistItems.map((item) => (
@@ -183,7 +206,7 @@ export default function StepPage() {
         <div className="lg:col-span-3 border-t p-4 bg-white">
           <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
             <div className="flex flex-col sm:flex-row gap-2 order-2 sm:order-1">
-              <button onClick={() => { wizard.reset(); router.push('/schritt/1'); }} className="px-6 py-2.5 bg-red-500 text-white rounded-lg font-semibold text-sm w-full sm:w-auto">Sitzungsdaten löschen</button>
+              <button onClick={() => { wizard.reset(); router.push('/step/1'); }} className="px-6 py-2.5 bg-red-500 text-white rounded-lg font-semibold text-sm w-full sm:w-auto">{t.common.delete}</button>
               <DeleteApiCacheButton />
 
               {/* Toggle Dynamic Analysis */}
@@ -195,7 +218,7 @@ export default function StepPage() {
                     : 'bg-gray-300 text-gray-700'
                 }`}
               >
-                {dynamicAnalysisEnabled ? '✓ Dynamische Analyse' : 'Dynamische Analyse'}
+                {dynamicAnalysisEnabled ? t.step1.dynamicAnalysisActive : t.step1.dynamicAnalysis}
               </button>
 
               {/* Manual Analysis Button (only visible when dynamic analysis is off) */}
@@ -212,26 +235,26 @@ export default function StepPage() {
                   {isChecklistLoading ? (
                     <>
                       <div className="w-4 h-4 border-t-2 border-white rounded-full animate-spin mr-2"></div>
-                      Analysiere...
+                      {t.step1.analyzing}
                     </>
                   ) : (
-                    'Analyse starten'
+                    t.step1.manualAnalyze
                   )}
                 </button>
               )}
             </div>
             <div className="order-1 sm:order-2 relative">
-              {currentStep < 6 ? <button onClick={() => handleNext()} disabled={!mounted || isLoading} className="px-8 py-3 bg-[#005A9C] text-white rounded hover:bg-[#004A7C] disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center justify-center w-full sm:w-auto transition-colors">{isLoading ? <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div> : null} Weiter</button> : <button onClick={() => { wizard.reset(); router.push('/schritt/1'); }} className="px-8 py-3 bg-[#005A9C] text-white rounded hover:bg-[#004A7C] font-semibold w-full sm:w-auto transition-colors">Neues Demand starten</button>}
+              {currentStep < 6 ? <button onClick={() => handleNext()} disabled={!mounted || isLoading} className="px-8 py-3 bg-[#005A9C] text-white rounded hover:bg-[#004A7C] disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center justify-center w-full sm:w-auto transition-colors">{isLoading ? <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div> : null} {t.common.next}</button> : <button onClick={() => { wizard.reset(); router.push('/step/1'); }} className="px-8 py-3 bg-[#005A9C] text-white rounded hover:bg-[#004A7C] font-semibold w-full sm:w-auto transition-colors">{t.step7.newDemand}</button>}
               {showInfoPopup && (
                 <div className="absolute bottom-full right-0 mb-2 w-max max-w-sm p-3 bg-red-100 border border-red-400 text-red-700 text-sm rounded-lg shadow-lg z-10"
                   role="alert"
                 >
                   <div className="flex items-center justify-between">
-                    <p>Bitte beschreiben Sie zuerst Ihre Idee, um fortzufahren.</p>
+                    <p>{t.step1.emptyTextAlert}</p>
                     <button
                       onClick={() => setShowInfoPopup(false)}
                       className="ml-4 -mr-1 p-1 text-red-500 hover:text-red-700 rounded-md focus:outline-none focus:ring-2 focus:ring-red-400"
-                      aria-label="Schließen"
+                      aria-label={t.step1.closeButton}
                     >
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path></svg>
                     </button>

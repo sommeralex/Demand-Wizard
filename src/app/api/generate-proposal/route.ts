@@ -4,12 +4,12 @@ import { generateContent } from "../../../lib/llm";
 
 export async function POST(req: NextRequest) {
   try {
-    const { demandText, classification, recommendation, forceReload } = await req.json();
+    const { demandText, classification, recommendation, forceReload, locale = 'de' } = await req.json();
     if (!demandText || !classification || !recommendation) {
       return NextResponse.json({ error: "Missing required data" }, { status: 400 });
     }
 
-    const prompt = getGenerateProposalPrompt(demandText, classification, recommendation);
+    const prompt = getGenerateProposalPrompt(demandText, classification, recommendation, locale);
 
     // Use cache by default, only reload if explicitly requested
     const markdown = await generateContent(

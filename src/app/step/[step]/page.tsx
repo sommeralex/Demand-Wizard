@@ -21,8 +21,8 @@ export default function StepPage() {
         </aside>
         <div className="col-span-3 border-t p-4 flex justify-between items-center bg-white">
             <button onClick={() => router.back()} disabled={currentStep <= 1} className="px-8 py-3 bg-gray-200 text-gray-800 rounded-lg disabled:opacity-50 font-semibold">Zurück</button>
-            <button onClick={() => { wizard.reset(); router.push('/schritt/1'); }} className="px-8 py-3 bg-red-500 text-white rounded-lg font-semibold">Sitzungsdaten löschen</button>
-            <button onClick={() => { wizard.reset(); router.push('/schritt/1'); }} className="px-8 py-3 bg-green-600 text-white rounded-lg font-semibold">Neues Demand starten</button>
+            <button onClick={() => { wizard.reset(); router.push('/step/1'); }} className="px-8 py-3 bg-red-500 text-white rounded-lg font-semibold">Sitzungsdaten löschen</button>
+            <button onClick={() => { wizard.reset(); router.push('/step/1'); }} className="px-8 py-3 bg-green-600 text-white rounded-lg font-semibold">Neues Demand starten</button>
         </div>
       </div>
     </div>

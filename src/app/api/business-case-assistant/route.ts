@@ -4,24 +4,24 @@ import { generateContent, startChat } from "../../../lib/llm";
 
 export async function POST(req: NextRequest) {
   try {
-    const { history, message, demandDescription, opexTotal, capexTotal, businessCaseData, currentAssumptions, forceReload } = await req.json();
+    const { history, message, demandDescription, opexTotal, capexTotal, businessCaseData, currentAssumptions, forceReload, locale = 'de' } = await req.json();
     if (!message) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
     }
 
     // Check if this is an initial break-even calculation request (no history)
-    const isInitialCalculation = (!history || history.length === 0) && message.includes('Starte die Business Case Analyse');
+    const isInitialCalculation = (!history || history.length === 0) && (message.includes('Starte die Business Case Analyse') || message.includes('Start the business case analysis'));
 
     let botResponseRaw: string;
 
     if (isInitialCalculation) {
       // Use generateContent for initial break-even calculation (single-shot)
-      const prompt = getBusinessCasePrompt(demandDescription, opexTotal, capexTotal, currentAssumptions);
+      const prompt = getBusinessCasePrompt(demandDescription, opexTotal, capexTotal, currentAssumptions, locale);
       console.log("Using generateContent for initial business case calculation");
       botResponseRaw = await generateContent(prompt, process.env.GEMINI_MODEL || "gemini-1.0-pro", forceReload);
     } else {
       // Use startChat for follow-up conversations
-      const systemPrompt = getBusinessCaseChatPrompt(demandDescription, opexTotal, capexTotal, businessCaseData, currentAssumptions);
+      const systemPrompt = getBusinessCaseChatPrompt(demandDescription, opexTotal, capexTotal, businessCaseData, currentAssumptions, locale);
       console.log("Using startChat for business case conversation");
       botResponseRaw = await startChat(
         history || [],

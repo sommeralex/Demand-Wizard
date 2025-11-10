@@ -3,7 +3,9 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { WizardProvider } from './context/WizardContext';
 import { ApiCacheProvider } from './context/ApiCacheContext';
+import { I18nProvider } from '../context/I18nContext';
 import { Stepper } from './components/Stepper';
+import LanguageSwitcher from './components/LanguageSwitcher';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,17 +23,23 @@ export default function RootLayout({
     <html lang="de">
       <body className={inter.className}>
         <ApiCacheProvider>
-          <WizardProvider>
-            <div className="flex flex-col h-screen">
-              <header className="bg-[#005A9C] text-white p-5 text-center text-2xl font-bold shadow-sm">
-                Demand Wizard
-              </header>
-              <Stepper />
-              <main className="flex-grow overflow-y-auto bg-white">
-                {children}
-              </main>
-            </div>
-          </WizardProvider>
+          <I18nProvider>
+            <WizardProvider>
+              <div className="flex flex-col h-screen">
+                <header className="bg-[#005A9C] text-white p-4 shadow-sm flex items-center justify-between">
+                  <div className="flex-1"></div>
+                  <h1 className="text-2xl font-bold flex-1 text-center">Demand Wizard</h1>
+                  <div className="flex-1 flex justify-end">
+                    <LanguageSwitcher />
+                  </div>
+                </header>
+                <Stepper />
+                <main className="flex-grow overflow-y-auto bg-white">
+                  {children}
+                </main>
+              </div>
+            </WizardProvider>
+          </I18nProvider>
         </ApiCacheProvider>
       </body>
     </html>

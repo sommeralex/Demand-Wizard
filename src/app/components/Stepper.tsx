@@ -1,22 +1,24 @@
 "use client";
 
 import { useWizard } from '../context/WizardContext';
+import { useI18n } from '../../context/I18nContext';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
-const steps = [
-  { number: 1, title: 'Idee beschreiben' },
-  { number: 2, title: 'Qualität bewerten' },
-  { number: 3, title: 'Strategie-Check' },
-  { number: 4, title: 'Portfolio-Analyse' },
-  { number: 5, title: 'Budget' },
-  { number: 6, title: 'Business Case' },
-  { number: 7, title: 'Antrag erstellen' },
-];
-
 export const Stepper = () => {
   const { step: currentStep, text } = useWizard();
+  const { t } = useI18n();
   const [mounted, setMounted] = useState(false);
+
+  const steps = [
+    { number: 1, title: t.stepper.step1 },
+    { number: 2, title: t.stepper.step2 },
+    { number: 3, title: t.stepper.step3 },
+    { number: 4, title: t.stepper.step4 },
+    { number: 5, title: t.stepper.step5 },
+    { number: 6, title: t.stepper.step6 },
+    { number: 7, title: t.stepper.step7 },
+  ];
 
   useEffect(() => {
     setMounted(true);
@@ -25,7 +27,7 @@ export const Stepper = () => {
   const handleStepClick = (e: React.MouseEvent, stepNumber: number) => {
     if (stepNumber > 1 && !text) {
       e.preventDefault();
-      alert('Bitte beschreiben Sie zuerst Ihre Idee in Schritt 1, bevor Sie fortfahren.');
+      alert(t.stepper.alertMessage);
     }
   };
 
@@ -36,7 +38,7 @@ export const Stepper = () => {
             <ol className="flex flex-wrap items-center justify-center gap-4">
               {steps.map((step, index) => (
                 <li key={step.number} className="flex items-center">
-                  <Link href={`/schritt/${step.number}`} className="flex flex-col items-center text-center">
+                  <Link href={`/step/${step.number}`} className="flex flex-col items-center text-center">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center text-white bg-gray-400 text-sm">
                       {step.number}
                     </div>
@@ -61,7 +63,7 @@ export const Stepper = () => {
 
           return (
             <li key={step.number} className="flex items-center">
-              <Link href={isEnabled ? `/schritt/${step.number}` : '#'}
+              <Link href={isEnabled ? `/step/${step.number}` : '#'}
                 onClick={(e) => handleStepClick(e, step.number)}
                 className={`flex flex-col items-center text-center ${!isEnabled ? 'cursor-not-allowed' : ''}`}>
                 <div
