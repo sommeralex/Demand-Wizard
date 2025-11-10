@@ -20,14 +20,7 @@ export async function POST(req: NextRequest) {
       console.error("Classify API returned empty response");
       return NextResponse.json({
         error: "Leere Antwort vom LLM",
-        dimensionen: {
-          effizienz: 0,
-          innovation: 0,
-          wachstum: 0,
-          risikominimierung: 0
-        },
-        hauptfokus: "Unbekannt",
-        erklaerung: "Die Klassifizierung konnte nicht durchgeführt werden. Bitte versuche es erneut."
+        error_message: "Die Klassifizierung konnte nicht durchgeführt werden. Bitte versuche es erneut."
       });
     }
 
@@ -38,33 +31,25 @@ export async function POST(req: NextRequest) {
       console.error("Extracted JSON is empty after cleanup");
       return NextResponse.json({
         error: "Leerer JSON-String",
-        dimensionen: {
-          effizienz: 0,
-          innovation: 0,
-          wachstum: 0,
-          risikominimierung: 0
-        },
-        hauptfokus: "Unbekannt",
-        erklaerung: "Die Klassifizierung konnte nicht durchgeführt werden. Die Antwort war leer."
+        error_message: "Die Klassifizierung konnte nicht durchgeführt werden. Die Antwort war leer."
       });
     }
 
     try {
       const classification = JSON.parse(jsonString);
 
-      // Validate that required fields exist
-      if (!classification.dimensionen || !classification.hauptfokus) {
-        console.warn("Classification missing required fields:", classification);
+      // Check if it's an error response (too vague description)
+      if (classification.error || classification.error_message) {
+        console.log("Classification returned error (too vague):", classification);
+        return NextResponse.json(classification);
+      }
+
+      // Validate that strategische_ausrichtung exists
+      if (!classification.strategische_ausrichtung) {
+        console.warn("Classification missing strategische_ausrichtung:", classification);
         return NextResponse.json({
-          dimensionen: classification.dimensionen || {
-            effizienz: 0,
-            innovation: 0,
-            wachstum: 0,
-            risikominimierung: 0
-          },
-          hauptfokus: classification.hauptfokus || "Unbekannt",
-          erklaerung: classification.erklaerung || "Die Klassifizierung enthält nicht alle erforderlichen Informationen.",
           error: "Unvollständige Daten",
+          error_message: "Die Klassifizierung enthält nicht alle erforderlichen Informationen.",
           ...classification
         });
       }
@@ -75,14 +60,7 @@ export async function POST(req: NextRequest) {
       console.error("Failed to parse:", jsonString.substring(0, 500));
       return NextResponse.json({
         error: "JSON parsing failed",
-        dimensionen: {
-          effizienz: 0,
-          innovation: 0,
-          wachstum: 0,
-          risikominimierung: 0
-        },
-        hauptfokus: "Unbekannt",
-        erklaerung: `Fehler beim Parsen der Klassifizierung: ${parseError instanceof Error ? parseError.message : 'Unbekannter Fehler'}`,
+        error_message: `Fehler beim Parsen der Klassifizierung: ${parseError instanceof Error ? parseError.message : 'Unbekannter Fehler'}`,
         rawResponse: jsonString.substring(0, 200)
       });
     }
@@ -91,14 +69,7 @@ export async function POST(req: NextRequest) {
     console.error("Error in classification API route:", error);
     return NextResponse.json({
       error: "Failed to classify text",
-      dimensionen: {
-        effizienz: 0,
-        innovation: 0,
-        wachstum: 0,
-        risikominimierung: 0
-      },
-      hauptfokus: "Unbekannt",
-      erklaerung: "Ein unerwarteter Fehler ist aufgetreten."
+      error_message: "Ein unerwarteter Fehler ist aufgetreten."
     }, { status: 500 });
   }
 }

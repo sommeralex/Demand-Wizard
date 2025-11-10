@@ -43,12 +43,12 @@ export async function POST(req: NextRequest) {
       const rating = JSON.parse(jsonString);
 
       // Validate that required fields exist
-      if (typeof rating.qualitaetsscore === 'undefined' || !rating.projekt_typ) {
+      if (!rating.bewertung || !rating.projekt_typ) {
         console.warn("Rating missing required fields:", rating);
         return NextResponse.json({
-          qualitaetsscore: rating.qualitaetsscore || 0,
+          bewertung: rating.bewertung || {},
           projekt_typ: rating.projekt_typ || "Unbekannt",
-          feedback: rating.feedback || "Die Bewertung enthält nicht alle erforderlichen Informationen.",
+          feedback_text: rating.feedback_text || "Die Bewertung enthält nicht alle erforderlichen Informationen.",
           error: "Unvollständige Daten",
           ...rating
         });

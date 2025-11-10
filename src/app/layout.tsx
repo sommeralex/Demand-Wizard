@@ -6,6 +6,7 @@ import { ApiCacheProvider } from './context/ApiCacheContext';
 import { I18nProvider } from '../context/I18nContext';
 import { Stepper } from './components/Stepper';
 import LanguageSwitcher from './components/LanguageSwitcher';
+import Footer from '../components/Footer';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -37,6 +38,7 @@ export default function RootLayout({
                 <main className="flex-grow overflow-y-auto bg-white">
                   {children}
                 </main>
+                <Footer />
               </div>
             </WizardProvider>
           </I18nProvider>

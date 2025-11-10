@@ -7,9 +7,10 @@ interface ExplanationBoxProps {
   description: string;
   example: string;
   isOpen?: boolean;
+  locale?: string;
 }
 
-export const ExplanationBox: React.FC<ExplanationBoxProps> = ({ title, description, example, isOpen = false }) => {
+export const ExplanationBox: React.FC<ExplanationBoxProps> = ({ title, description, example, isOpen = false, locale = 'de' }) => {
   const [open, setOpen] = useState(isOpen);
   const [hasBeenOpened, setHasBeenOpened] = useState(isOpen);
 
@@ -60,7 +61,7 @@ export const ExplanationBox: React.FC<ExplanationBoxProps> = ({ title, descripti
         <div className="p-4 pt-0 pl-12 text-gray-600">
           <p className="text-sm">{description}</p>
           <p className="mt-2 text-sm italic text-gray-500">
-            <span className="font-semibold not-italic">Beispiel:</span> {example}
+            <span className="font-semibold not-italic">{locale === 'en' ? 'Example:' : 'Beispiel:'}</span> {example}
           </p>
         </div>
       )}

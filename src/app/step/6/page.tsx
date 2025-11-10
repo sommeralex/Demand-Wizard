@@ -7,6 +7,7 @@ import { useI18n } from '../../../context/I18nContext';
 import ReactMarkdown from 'react-markdown';
 import React from 'react';
 import { Chart } from 'react-chartjs-2';
+import StepNavigation from '../../../components/StepNavigation';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -1030,40 +1031,32 @@ export default function StepPage() {
       </div>
 
       {/* Bottom navigation */}
-      <div className="border-t p-4 bg-white">
-        <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
-          <div className="flex flex-col sm:flex-row gap-2 order-2 sm:order-1">
-            <button
-              onClick={() => router.back()}
-              disabled={currentStep <= 1}
-              className="px-6 py-2.5 text-sm bg-gray-200 text-gray-800 rounded-lg disabled:opacity-50 font-semibold w-full sm:w-auto"
-            >
-              {t.common.back}
-            </button>
+      <StepNavigation
+        currentStep={currentStep}
+        totalSteps={7}
+        onNext={handleNext}
+        onBack={() => router.back()}
+        isNextDisabled={false}
+        isLoading={isLoading}
+        developerTools={
+          <>
             <button
               onClick={() => { wizard.reset(); router.push('/step/1'); }}
-              className="px-6 py-2.5 text-sm bg-red-500 text-white rounded-lg font-semibold w-full sm:w-auto"
+              className="px-6 py-2.5 bg-red-500 text-white rounded-lg font-semibold text-sm"
             >
               {t.common.delete}
             </button>
             <button
               onClick={forceReloadBusinessCase}
               disabled={isLoading}
-              className="px-6 py-2.5 text-sm bg-yellow-500 text-white rounded-lg disabled:opacity-50 font-semibold w-full sm:w-auto"
+              className="px-6 py-2.5 bg-yellow-500 text-white rounded-lg disabled:opacity-50 font-semibold text-sm"
             >
               {t.common.forceReload}
             </button>
-          </div>
-          <button
-            onClick={handleNext}
-            disabled={isLoading}
-            className="px-8 py-3 bg-[#005A9C] text-white rounded-lg hover:bg-[#004A7C] disabled:opacity-50 font-semibold flex justify-center items-center w-full sm:w-auto order-1 sm:order-2"
-          >
-            {isLoading ? <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div> : null}
-            {t.common.next}
-          </button>
-        </div>
-      </div>
+          </>
+        }
+        t={t}
+      />
     </div>
   );
 }

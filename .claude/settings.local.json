@@ -18,7 +18,8 @@
       "Bash(npm install:*)",
       "Bash(npm cache clean:*)",
       "Bash(rename:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useWizard } from '../../context/WizardContext';
 import { useI18n } from '../../../context/I18nContext';
 import { DeleteApiCacheButton } from '../../components/DeleteApiCacheButton';
+import StepNavigation from '../../../components/StepNavigation';
 import CytoscapeComponent from 'react-cytoscapejs';
 
 export default function StepPage() {
@@ -199,16 +200,34 @@ export default function StepPage() {
         <aside className="hidden lg:block lg:col-span-1 p-4 md:p-8 bg-gray-50 border-l border-gray-200 lg:overflow-y-auto">
             {renderCopilotContent()}
         </aside>
-        <div className="lg:col-span-3 border-t p-4 bg-white">
-          <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
-            <div className="flex flex-col sm:flex-row gap-2 order-2 sm:order-1">
-              <button onClick={() => router.back()} disabled={currentStep <= 1} className="px-6 py-2.5 text-sm bg-gray-200 text-gray-800 rounded-lg disabled:opacity-50 font-semibold w-full sm:w-auto">{t.common.back}</button>
-              <button onClick={() => { wizard.reset(); router.push('/step/1'); }} className="px-6 py-2.5 text-sm bg-red-500 text-white rounded-lg font-semibold w-full sm:w-auto">{t.common.delete}</button>
-              <DeleteApiCacheButton />
-              <button onClick={() => fetchData(true)} disabled={isLoading} className="px-6 py-2.5 text-sm bg-yellow-500 text-white rounded-lg disabled:opacity-50 font-semibold w-full sm:w-auto">{t.common.forceReload}</button>
-            </div>
-            <button onClick={handleNext} disabled={isLoading} className="px-8 py-3 bg-blue-600 text-white rounded-lg disabled:opacity-50 font-semibold flex justify-center items-center w-full sm:w-auto order-1 sm:order-2">{isLoading ? <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div> : null} {t.common.next}</button>
-          </div>
+        <div className="lg:col-span-3">
+          <StepNavigation
+            currentStep={currentStep}
+            totalSteps={7}
+            onNext={handleNext}
+            onBack={() => router.back()}
+            isNextDisabled={false}
+            isLoading={isLoading}
+            developerTools={
+              <>
+                <button
+                  onClick={() => { wizard.reset(); router.push('/step/1'); }}
+                  className="px-6 py-2.5 bg-red-500 text-white rounded-lg font-semibold text-sm"
+                >
+                  {t.common.delete}
+                </button>
+                <DeleteApiCacheButton />
+                <button
+                  onClick={() => fetchData(true)}
+                  disabled={isLoading}
+                  className="px-6 py-2.5 bg-yellow-500 text-white rounded-lg disabled:opacity-50 font-semibold text-sm"
+                >
+                  {t.common.forceReload}
+                </button>
+              </>
+            }
+            t={t}
+          />
         </div>
       </div>
     </div>

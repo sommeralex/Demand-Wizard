@@ -234,6 +234,8 @@ export const de = {
     apiError: "❌ **Fehler:**\n\n{error}",
     connectionError: "❌ **Verbindungsfehler:**\n\nEs gab ein Problem bei der Kommunikation mit dem Assistenten.\n\n**Fehler:** {error}\n\nBitte überprüfe deine Internetverbindung und versuche es erneut.",
     unexpectedResponse: "⚠️ **Unerwartete Antwort**\n\nDer Assistent hat eine Antwort in einem unerwarteten Format zurückgegeben.\n\n**Debug-Info:**\n```json\n{data}\n```\n\nBitte versuche es erneut oder formuliere deine Frage anders.",
+    incompleteData: "Die Analyse konnte nicht vollständig durchgeführt werden. Bitte versuche es erneut oder erweitere deine Beschreibung mit mehr Details.",
+    ratingFailed: "Die Bewertung konnte nicht durchgeführt werden. Bitte versuche es erneut.",
   },
 } as const;
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useWizard, type ChecklistItem } from '../../context/WizardContext';
 import { useI18n } from '../../../context/I18nContext';
 import { DeleteApiCacheButton } from '../../components/DeleteApiCacheButton';
+import StepNavigation from '../../../components/StepNavigation';
 import { getHints, getPlaceholder } from '../../../lib/i18n/hints';
 import { getChecklistItemDefinitions } from '../../../lib/i18n/checklistItems';
 import { getBadExampleText, getModerateExampleText, getCompleteExampleText } from '../../../lib/i18n/examples';
@@ -105,6 +106,58 @@ export default function StepPage() {
 
   const debouncedAnalyzeText = useCallback(debounce(analyzeTextForChecklist, 1000), [debounce, analyzeTextForChecklist]);
 
+  // Combined analysis function that runs both checklist and rating
+  const runFullAnalysis = async (reload: boolean = false) => {
+    if (!wizard.text.trim() || wizard.text.length < 20) {
+      return;
+    }
+
+    setIsChecklistLoading(true);
+    try {
+      // Run both analyses in parallel
+      const [checklistRes, ratingRes] = await Promise.all([
+        fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: wizard.text, forceReload: reload, locale }) }),
+        fetch('/api/rate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: wizard.text, forceReload: reload, locale }) })
+      ]);
+
+      if (!checklistRes.ok || !ratingRes.ok) {
+        throw new Error('Analysis failed');
+      }
+
+      const [analysis, rating] = await Promise.all([
+        checklistRes.json(),
+        ratingRes.json()
+      ]);
+
+      // Handle checklist results
+      if (analysis.error) {
+        alert(`Error analyzing text: ${analysis.details || analysis.error}`);
+      } else {
+        wizard.setChecklistItems(prevItems => prevItems.map((item: ChecklistItem) => ({ ...item, checked: !!analysis[item.id] })));
+      }
+
+      // Handle rating results
+      // Accept rating even if it has incomplete data warning, as long as it has the basic structure
+      if (rating.error && rating.error !== 'Unvollständige Daten') {
+        // Only show error for serious failures, not incomplete data
+        alert(t.errors.ratingFailed);
+      } else if (rating.bewertung && rating.projekt_typ) {
+        // If we have the minimum required fields, accept it
+        wizard.setRating(rating);
+        setLastAnalyzedText(wizard.text);
+      } else {
+        // Truly incomplete - show error
+        alert(t.errors.incompleteData);
+      }
+    } catch (error) {
+      console.error("Failed to run full analysis:", error);
+      alert(t.errors.ratingFailed);
+    } finally {
+      setIsChecklistLoading(false);
+      setForceReload(false);
+    }
+  };
+
   useEffect(() => {
     // Only run automatic analysis if dynamic analysis is enabled
     if (dynamicAnalysisEnabled && wizard.text && wizard.text !== lastAnalyzedText) {
@@ -131,7 +184,11 @@ export default function StepPage() {
         if (!res.ok) throw new Error('Rating API call failed');
         const rating = await res.json();
         if (rating.error) {
-          alert(`Error rating text: ${rating.details || rating.error}`);
+          // Show translated error message based on error type
+          const errorMessage = rating.error === 'Unvollständige Daten'
+            ? t.errors.incompleteData
+            : t.errors.ratingFailed;
+          alert(errorMessage);
           setIsLoading(false);
           return;
         }
@@ -139,7 +196,7 @@ export default function StepPage() {
         setLastAnalyzedText(wizard.text); // Update lastAnalyzedText after successful rating
         router.push('/step/2');
       }
-    } catch (error) { console.error(`Error progressing from step ${currentStep}:`, error); alert("Failed to rate text. Please try again."); }
+    } catch (error) { console.error(`Error progressing from step ${currentStep}:`, error); alert(t.errors.ratingFailed); }
     finally { setIsLoading(false); setForceReload(false); }
   };
 
@@ -154,6 +211,7 @@ export default function StepPage() {
             description={hint.description}
             example={hint.example}
             isOpen={index === 0} // Open the first item by default
+            locale={locale}
           />
         ))}
       </div></div>;
@@ -203,34 +261,24 @@ export default function StepPage() {
         <aside className="hidden lg:block lg:col-span-1 p-4 md:p-8 bg-gray-50 border-l border-gray-200 lg:overflow-y-auto">
             {renderCopilotContent()}
         </aside>
-        <div className="lg:col-span-3 border-t p-4 bg-white">
-          <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
-            <div className="flex flex-col sm:flex-row gap-2 order-2 sm:order-1">
-              <button onClick={() => { wizard.reset(); router.push('/step/1'); }} className="px-6 py-2.5 bg-red-500 text-white rounded-lg font-semibold text-sm w-full sm:w-auto">{t.common.delete}</button>
-              <DeleteApiCacheButton />
-
-              {/* Toggle Dynamic Analysis */}
-              <button
-                onClick={() => setDynamicAnalysisEnabled(!dynamicAnalysisEnabled)}
-                className={`px-6 py-2.5 rounded-lg font-semibold text-sm w-full sm:w-auto ${
-                  dynamicAnalysisEnabled
-                    ? 'bg-green-500 text-white'
-                    : 'bg-gray-300 text-gray-700'
-                }`}
-              >
-                {dynamicAnalysisEnabled ? t.step1.dynamicAnalysisActive : t.step1.dynamicAnalysis}
-              </button>
-
-              {/* Manual Analysis Button (only visible when dynamic analysis is off) */}
-              {mounted && !dynamicAnalysisEnabled && (
+        <div className="lg:col-span-3">
+          <StepNavigation
+            currentStep={currentStep}
+            totalSteps={7}
+            onNext={handleNext}
+            isNextDisabled={!mounted || !wizard.rating || wizard.text !== lastAnalyzedText}
+            isLoading={isLoading}
+            nextButtonTitle={wizard.text !== lastAnalyzedText ? (locale === 'en' ? 'Please analyze your text first' : 'Bitte analysiere zuerst deinen Text') : ''}
+            actionButtons={
+              mounted && !dynamicAnalysisEnabled ? (
                 <button
                   onClick={() => {
                     setForceReload(true);
                     wizard.setChecklistItems(items => items.map((item: ChecklistItem) => ({ ...item, checked: false })));
-                    analyzeTextForChecklist(wizard.text, true);
+                    runFullAnalysis(true);
                   }}
                   disabled={isChecklistLoading || !wizard.text}
-                  className="px-6 py-2.5 bg-purple-500 text-white rounded-lg disabled:opacity-50 font-semibold text-sm w-full sm:w-auto flex items-center justify-center"
+                  className="px-6 py-2.5 bg-purple-500 text-white rounded-lg disabled:opacity-50 font-semibold text-sm flex items-center justify-center"
                 >
                   {isChecklistLoading ? (
                     <>
@@ -241,28 +289,31 @@ export default function StepPage() {
                     t.step1.manualAnalyze
                   )}
                 </button>
-              )}
-            </div>
-            <div className="order-1 sm:order-2 relative">
-              {currentStep < 6 ? <button onClick={() => handleNext()} disabled={!mounted || isLoading} className="px-8 py-3 bg-[#005A9C] text-white rounded hover:bg-[#004A7C] disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center justify-center w-full sm:w-auto transition-colors">{isLoading ? <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div> : null} {t.common.next}</button> : <button onClick={() => { wizard.reset(); router.push('/step/1'); }} className="px-8 py-3 bg-[#005A9C] text-white rounded hover:bg-[#004A7C] font-semibold w-full sm:w-auto transition-colors">{t.step7.newDemand}</button>}
-              {showInfoPopup && (
-                <div className="absolute bottom-full right-0 mb-2 w-max max-w-sm p-3 bg-red-100 border border-red-400 text-red-700 text-sm rounded-lg shadow-lg z-10"
-                  role="alert"
+              ) : null
+            }
+            developerTools={
+              <>
+                <button
+                  onClick={() => { wizard.reset(); router.push('/step/1'); }}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg font-semibold text-xs"
                 >
-                  <div className="flex items-center justify-between">
-                    <p>{t.step1.emptyTextAlert}</p>
-                    <button
-                      onClick={() => setShowInfoPopup(false)}
-                      className="ml-4 -mr-1 p-1 text-red-500 hover:text-red-700 rounded-md focus:outline-none focus:ring-2 focus:ring-red-400"
-                      aria-label={t.step1.closeButton}
-                    >
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path></svg>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+                  {t.common.delete}
+                </button>
+                <DeleteApiCacheButton />
+                <button
+                  onClick={() => setDynamicAnalysisEnabled(!dynamicAnalysisEnabled)}
+                  className={`px-4 py-2 rounded-lg font-semibold text-xs ${
+                    dynamicAnalysisEnabled
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-300 text-gray-700'
+                  }`}
+                >
+                  {dynamicAnalysisEnabled ? t.step1.dynamicAnalysisActive : t.step1.dynamicAnalysis}
+                </button>
+              </>
+            }
+            t={t}
+          />
         </div>
       </div>
     </div>
