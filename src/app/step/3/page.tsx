@@ -18,7 +18,20 @@ import { Radar } from 'react-chartjs-2';
 
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
-const scoreToNumber = (score: string) => ({ 'hoch': 3, 'mittel': 2, 'gering': 1 }[score?.toLowerCase()] || 0);
+const scoreToNumber = (score: string) => {
+  const lowerScore = score?.toLowerCase();
+  const scoreMap: { [key: string]: number } = {
+    // German
+    'hoch': 3,
+    'mittel': 2,
+    'gering': 1,
+    // English
+    'high': 3,
+    'medium': 2,
+    'low': 1
+  };
+  return scoreMap[lowerScore] || 0;
+};
 
 export default function StepPage() {
   const router = useRouter();

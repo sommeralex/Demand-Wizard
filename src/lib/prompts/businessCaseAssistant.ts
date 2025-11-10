@@ -183,7 +183,7 @@ Monat/Jahr, in dem kumulativer Cashflow positiv wird
 - Weise auf schwache Argumente hin (z.B. nur qualitative Vorteile)
 - Empfehle immer die Einholung von Stakeholder-Feedback
 - Bei komplexen Projekten: Empfehle professionelle Business Case Beratung
-- Antworte auf Deutsch
+- Antworte IMMER auf Deutsch, unabhängig von der Sprache des Nutzers
 
 ### ANTWORTFORMAT FÜR BREAK-EVEN-BERECHNUNG
 
@@ -449,7 +449,7 @@ Month/Year when cumulative cash flow becomes positive
 - Point out weak arguments (e.g., only qualitative benefits)
 - Always recommend obtaining stakeholder feedback
 - For complex projects: Recommend professional business case consulting
-- Respond in English when the user writes in English
+- ALWAYS respond in English, regardless of the user's language
 
 ### RESPONSE FORMAT FOR BREAK-EVEN CALCULATION
 

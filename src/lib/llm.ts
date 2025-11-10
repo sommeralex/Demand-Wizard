@@ -56,8 +56,8 @@ export async function generateContent(prompt: string, modelName: string = "gemin
   }
 }
 
-export async function startChat(history: any[], newMessage: string, modelName: string = "gemini-1.0-pro", demandDescription: string, forceReload: boolean = false): Promise<string> {
-  const cacheKey = `startChat-${JSON.stringify(history)}-${newMessage}-${modelName}-${demandDescription}`;
+export async function startChat(history: any[], newMessage: string, modelName: string = "gemini-1.0-pro", systemPrompt: string, forceReload: boolean = false): Promise<string> {
+  const cacheKey = `startChat-${JSON.stringify(history)}-${newMessage}-${modelName}-${systemPrompt}`;
   if (!forceReload) {
     const cachedResponse = getFromServerCache(cacheKey);
     if (cachedResponse) {
@@ -82,6 +82,7 @@ export async function startChat(history: any[], newMessage: string, modelName: s
       const response = await anthropic.messages.create({
         model: modelName.startsWith("claude") ? modelName : "claude-3-opus-20240229", // Default Claude model
         max_tokens: 2000, // Max tokens for chat response
+        system: systemPrompt, // Use system prompt for Claude
         messages: claudeMessages,
       });
       const responseText = response.content[0].text;
@@ -97,7 +98,7 @@ export async function startChat(history: any[], newMessage: string, modelName: s
       return JSON.stringify({ error: "GOOGLE_API_KEY is not set." });
     }
     try {
-      const model = genAI.getGenerativeModel({ model: modelName });
+      const model = genAI.getGenerativeModel({ model: modelName, systemInstruction: systemPrompt });
 
       const generationConfig = { maxOutputTokens: 2000 };
       const safetySettings = [
@@ -107,15 +108,10 @@ export async function startChat(history: any[], newMessage: string, modelName: s
         { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
       ];
 
-      const initialPrompt = demandDescription; // Assuming demandDescription is the initial prompt for Gemini chat
-
       const chat = model.startChat({
         generationConfig,
         safetySettings,
-        history: [
-            { role: "user", parts: [{ text: initialPrompt }] },
-            ...history
-        ],
+        history: history
       });
 
       const result = await chat.sendMessage(newMessage);
