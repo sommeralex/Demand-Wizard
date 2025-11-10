@@ -31,7 +31,7 @@ interface Rating {
 }
 interface ClassificationResult { [key: string]: { score: string; begruendung: string }; }
 interface SimilarProject { id: string; title: string; status: string; similarity: number; }
-interface Recommendation { empfehlung_aktion: string; target_id: string | null; zusammenfassung_benutzer: string; }
+interface Recommendation { empfehlung_aktion: string; target_id: string | null; zusammenfassung_benutzer: string; error?: string; }
 interface Proposal { markdown: string; }
 export interface ChecklistItem { id: string; text: string; checked: boolean; }
 interface BudgetTableRow { id: string; kostentyp: 'OPEX' | 'CAPEX'; beschreibung: string; wert: string; jahr: number; }
