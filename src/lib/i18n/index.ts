@@ -1,16 +1,16 @@
-import { de, TranslationKeys } from './locales/de';
+import { de } from './locales/de';
 import { en } from './locales/en';
 
 export type Locale = 'de' | 'en';
+export type TranslationKeys = typeof de;
 
-const translations: Record<Locale, TranslationKeys> = {
+const translations = {
   de,
-  en: en as TranslationKeys,
+  en,
 } as const;
 
 export function getTranslations(locale: Locale): TranslationKeys {
-  return translations[locale];
+  return translations[locale] as TranslationKeys;
 }
 
 export { de, en };
-export type { TranslationKeys };
