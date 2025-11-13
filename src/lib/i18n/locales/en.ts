@@ -2,7 +2,8 @@ export const en = {
   common: {
     back: "Back",
     next: "Next",
-    delete: "Delete Session Data",
+    delete: "Delete",
+    deleteSessionData: "Delete Session Data",
     forceReload: "Force Reload",
     loading: "Loading...",
     error: "Error",

@@ -2,7 +2,8 @@ export const de = {
   common: {
     back: "Zurück",
     next: "Weiter",
-    delete: "Sitzungsdaten löschen",
+    delete: "Löschen",
+    deleteSessionData: "Sitzungsdaten löschen",
     forceReload: "Force Reload",
     loading: "Lade...",
     error: "Fehler",

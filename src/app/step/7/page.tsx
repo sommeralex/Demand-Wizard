@@ -116,7 +116,7 @@ export default function StepPage() {
                   onClick={() => { wizard.reset(); router.push('/step/1'); }}
                   className="px-6 py-2.5 bg-red-500 text-white rounded-lg font-semibold text-sm"
                 >
-                  {t.common.delete}
+                  {t.common.deleteSessionData}
                 </button>
                 <button
                   onClick={() => fetchProposal(true)}
