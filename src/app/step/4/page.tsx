@@ -175,14 +175,19 @@ export default function StepPage() {
       {
         selector: 'edge',
         style: {
-          'width': (ele: any) => Math.max(2, (ele.data('similarity') / 100) * 5),
+          'width': (ele: any) => {
+            const similarity = ele.data('similarity');
+            if (similarity >= 80) return 6; // Hohe Abhängigkeit - Dick
+            if (similarity >= 60) return 4; // Mittlere Abhängigkeit - Mittel
+            return 2; // Geringe Abhängigkeit - Dünn
+          },
           'line-color': (ele: any) => {
             const similarity = ele.data('similarity');
-            if (similarity >= 80) return '#DC2626'; // High similarity - Red
-            if (similarity >= 60) return '#F59E0B'; // Medium - Amber
-            return '#9CA3AF'; // Low - Gray
+            if (similarity >= 80) return '#4B5563'; // Hohe Abhängigkeit - Dunkelgrau
+            if (similarity >= 60) return '#6B7280'; // Mittlere Abhängigkeit - Mittelgrau
+            return '#D1D5DB'; // Geringe Abhängigkeit - Hellgrau
           },
-          'opacity': (ele: any) => 0.3 + (ele.data('similarity') / 100) * 0.7,
+          'opacity': 0.8,
           'curve-style': 'bezier'
         }
       },
