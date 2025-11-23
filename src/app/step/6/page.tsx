@@ -953,7 +953,11 @@ export default function StepPage() {
       <div className="flex flex-col lg:flex-row lg:flex-grow lg:overflow-hidden relative">
         {/* Left side - Demand Text and Break-Even Chart */}
         <div className="p-4 md:p-8 lg:overflow-y-auto bg-white lg:w-auto" style={{ width: isLargeScreen ? `${100 - sidebarWidth}%` : '100%' }}>
-          <h2 className="text-2xl font-semibold mb-6">{t.step6.title}</h2>
+          {/* Mobile: Show step title */}
+          <div className="block lg:hidden mb-6">
+            <h2 className="text-2xl font-semibold text-gray-800">{t.step6.title}</h2>
+          </div>
+          <h2 className="hidden lg:block text-2xl font-semibold mb-6">{t.step6.title}</h2>
 
           {/* Editable Demand Text */}
           <div className="mb-6">

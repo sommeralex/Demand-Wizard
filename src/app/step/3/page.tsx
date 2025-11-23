@@ -191,6 +191,10 @@ export default function StepPage() {
     <div className="flex flex-col min-h-screen lg:h-full">
       <div className="grid grid-cols-1 lg:grid-cols-3 lg:flex-grow lg:overflow-hidden">
         <div className="lg:col-span-2 p-4 md:p-8 lg:overflow-y-auto">
+            {/* Mobile: Show step title */}
+            <div className="block lg:hidden mb-6">
+              <h2 className="text-2xl font-semibold text-gray-800">{t.step3.title}</h2>
+            </div>
             {renderStepContent()}
         </div>
         {/* Mobile: Show copilot content below main content */}

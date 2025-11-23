@@ -228,7 +228,7 @@ export default function StepPage() {
         </div>
 
         {/* Graph Visualization */}
-        <div className="flex-grow border-2 border-gray-200 rounded-lg bg-white shadow-lg relative overflow-hidden min-h-[500px]">
+        <div className="border-2 border-gray-200 rounded-lg bg-white shadow-lg overflow-hidden min-h-[500px]">
           <CytoscapeComponent
             elements={graphElements}
             stylesheet={graphStylesheet as any}
@@ -257,34 +257,34 @@ export default function StepPage() {
               });
             }}
           />
+        </div>
 
-          {/* Legend overlay */}
-          <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-gray-200 max-w-xs">
-            <h4 className="font-semibold text-sm mb-2 text-gray-800">{t.step4.legend}</h4>
-            <div className="space-y-1.5 text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-blue-600 border-2 border-blue-800"></div>
-                <span>{t.step4.yourIdea}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-red-600 border-2 border-red-800"></div>
-                <span>{t.step4.typeSimilarDemand}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-purple-600 border-2 border-purple-800"></div>
-                <span>{t.step4.typeRunningProject}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-amber-500 border-2 border-amber-700"></div>
-                <span>{t.step4.typeInnovationIdea}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-green-500 border-2 border-green-700"></div>
-                <span>{t.step4.typeBusinessProcess}</span>
-              </div>
+        {/* Legend - separate element below canvas */}
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+          <h4 className="font-semibold text-sm mb-3 text-gray-800">{t.step4.legend}</h4>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-blue-600 border-2 border-blue-800 flex-shrink-0"></div>
+              <span>{t.step4.yourIdea}</span>
             </div>
-            <p className="text-xs text-gray-500 mt-3 italic">{t.step4.clickNodeInfo}</p>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-red-600 border-2 border-red-800 flex-shrink-0"></div>
+              <span>{t.step4.typeSimilarDemand}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-purple-600 border-2 border-purple-800 flex-shrink-0"></div>
+              <span>{t.step4.typeRunningProject}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-amber-500 border-2 border-amber-700 flex-shrink-0"></div>
+              <span>{t.step4.typeInnovationIdea}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-green-500 border-2 border-green-700 flex-shrink-0"></div>
+              <span>{t.step4.typeBusinessProcess}</span>
+            </div>
           </div>
+          <p className="text-xs text-gray-500 mt-3 italic">{t.step4.clickNodeInfo}</p>
         </div>
       </div>
     );
@@ -374,6 +374,10 @@ export default function StepPage() {
     <div className="flex flex-col min-h-screen lg:h-full">
       <div className="grid grid-cols-1 lg:grid-cols-3 lg:flex-grow lg:overflow-hidden">
         <div className="lg:col-span-2 p-4 md:p-8 lg:overflow-y-auto min-h-[600px]">
+            {/* Mobile: Show step title */}
+            <div className="block lg:hidden mb-6">
+              <h2 className="text-2xl font-semibold text-gray-800">{t.step4.title}</h2>
+            </div>
             {renderStepContent()}
         </div>
         {/* Mobile: Show copilot content below main content */}
