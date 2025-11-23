@@ -1003,7 +1003,7 @@ export default function StepPage() {
           style={{ cursor: isResizing ? 'col-resize' : 'ew-resize' }}
         />
 
-        {/* Right side - Business Case Assumptions + Assistant */}
+        {/* Right side - Business Case Assumptions + Assistant - Desktop */}
         <aside className="hidden lg:block p-4 md:p-8 bg-gray-100 lg:overflow-y-auto space-y-6 lg:w-auto" style={{ width: isLargeScreen ? `${sidebarWidth}%` : '100%' }}>
           <BusinessCaseAssumptions
             opexTotal={avgOpexPerYear}
@@ -1028,6 +1028,32 @@ export default function StepPage() {
             />
           </div>
         </aside>
+      </div>
+
+      {/* Mobile: Show assumptions and chat below main content */}
+      <div className="block lg:hidden p-4 md:p-8 bg-gray-100 border-t border-gray-200 space-y-6">
+        <BusinessCaseAssumptions
+          opexTotal={avgOpexPerYear}
+          capexTotal={capexSum}
+          yearlyOpex={yearlyTotals}
+          onCalculate={handleBusinessCaseUpdate}
+          assumptions={assumptions}
+          onAssumptionsChange={setAssumptions}
+          t={t}
+        />
+
+        <div className="border-t pt-6">
+          <BusinessCaseChat
+            demand={wizard.text}
+            opexTotal={avgOpexPerYear}
+            capexTotal={capexSum}
+            businessCaseData={wizard.businessCaseData}
+            onBusinessCaseUpdate={handleBusinessCaseUpdate}
+            currentAssumptions={assumptions}
+            t={t}
+            locale={locale}
+          />
+        </div>
       </div>
 
       {/* Bottom navigation */}

@@ -764,10 +764,15 @@ alert("Fehler bei der automatischen Klassifizierung. Bitte fülle die Tabelle ma
           style={{ cursor: isResizing ? 'col-resize' : 'ew-resize' }}
         />
 
-        {/* Right side - Budget Assistant Chat */}
+        {/* Right side - Budget Assistant Chat - Desktop */}
         <aside className="hidden lg:block p-4 md:p-8 bg-gray-100 lg:overflow-y-auto lg:w-auto" style={{ width: isLargeScreen ? `${sidebarWidth}%` : '100%' }}>
           <BudgetChat demand={{ description: wizard.text }} budgetTable={wizard.budgetTable} t={t} locale={locale} />
         </aside>
+      </div>
+
+      {/* Mobile: Show chat below main content */}
+      <div className="block lg:hidden p-4 md:p-8 bg-gray-100 border-t border-gray-200">
+        <BudgetChat demand={{ description: wizard.text }} budgetTable={wizard.budgetTable} t={t} locale={locale} />
       </div>
 
       {/* Bottom navigation */}

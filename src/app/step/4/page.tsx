@@ -228,7 +228,7 @@ export default function StepPage() {
         </div>
 
         {/* Graph Visualization */}
-        <div className="flex-grow border-2 border-gray-200 rounded-lg bg-white shadow-lg relative overflow-hidden">
+        <div className="flex-grow border-2 border-gray-200 rounded-lg bg-white shadow-lg relative overflow-hidden min-h-[500px]">
           <CytoscapeComponent
             elements={graphElements}
             stylesheet={graphStylesheet as any}
@@ -373,7 +373,7 @@ export default function StepPage() {
   return (
     <div className="flex flex-col min-h-screen lg:h-full">
       <div className="grid grid-cols-1 lg:grid-cols-3 lg:flex-grow lg:overflow-hidden">
-        <div className="lg:col-span-2 p-4 md:p-8 lg:overflow-y-auto">
+        <div className="lg:col-span-2 p-4 md:p-8 lg:overflow-y-auto min-h-[600px]">
             {renderStepContent()}
         </div>
         {/* Mobile: Show copilot content below main content */}
